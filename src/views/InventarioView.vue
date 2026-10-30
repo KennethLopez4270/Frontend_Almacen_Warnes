@@ -265,6 +265,7 @@ const selectedCategoria = ref<number | ''>('')
 const selectedProveedor = ref<number | ''>('')
 const selectedEstadoProducto = ref<number | ''>('')
 const filterProximosVencer = ref(false)
+const filterEnOferta = ref(false)
 const filterEstadoPendiente = ref<number | ''>('') // '' = Todos los estados (Pendientes, Aprobados y Rechazados)
 
 // Umbral dinámico y configurable para alertas de vencimiento (por defecto 14 días / 2 semanas)
@@ -616,11 +617,17 @@ const filasStock = computed<StockFilaCombinada[]>(() => {
       if (selectedEstadoProducto.value !== '' && fila.estado_producto !== selectedEstadoProducto.value) {
         return false
       }
-      // Filtro próximos a vencer / en oferta
+      // Filtro proximos a vencer (estricto segun umbral de dias)
       if (filterProximosVencer.value) {
-        const porVencer = fila.dias_vencimiento !== null && fila.dias_vencimiento <= diasUmbralVencimiento.value
-        const enOferta = fila.en_descuento
-        if (!porVencer && !enOferta) return false
+        if (fila.dias_vencimiento === null || fila.dias_vencimiento > diasUmbralVencimiento.value) {
+          return false
+        }
+      }
+      // Filtro solo productos en oferta / descuento
+      if (filterEnOferta.value) {
+        if (!fila.en_descuento) {
+          return false
+        }
       }
       return true
     })
@@ -1342,6 +1349,7 @@ function resetFiltros() {
   selectedProveedor.value = ''
   selectedEstadoProducto.value = ''
   filterProximosVencer.value = false
+  filterEnOferta.value = false
   diasUmbralVencimientoPreset.value = 14
   diasUmbralVencimiento.value = 14
 }
@@ -1764,7 +1772,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Toggle Rápido Próximos a Vencer (Tab Stock) -->
+        <!-- Toggle Rapido Proximos a Vencer (Tab Stock) -->
         <button
           v-if="activeTab === 'stock'"
           type="button"
@@ -1776,12 +1784,28 @@ onMounted(() => {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
           </svg>
-          <span>Solo Próximos a Vencer (≤ {{ diasUmbralVencimiento }} días) / En Oferta</span>
+          <span>Solo Próximos a Vencer (≤ {{ diasUmbralVencimiento }} días)</span>
+        </button>
+
+        <!-- Toggle Rapido En Oferta (Tab Stock) -->
+        <button
+          v-if="activeTab === 'stock'"
+          type="button"
+          class="inv-filter-toggle-btn"
+          :class="{ active: filterEnOferta }"
+          @click="filterEnOferta = !filterEnOferta"
+          title="Filtrar unicamente productos que estan en oferta o descuento"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+          <span>Solo en Oferta</span>
         </button>
 
         <!-- Boton Reset Filtros -->
         <button
-          v-if="searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer"
+          v-if="searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer || filterEnOferta"
           type="button"
           class="inv-btn-reset-filters"
           @click="resetFiltros"
@@ -1805,7 +1829,7 @@ onMounted(() => {
                 <th style="width: 140px">Cód. Interno / Barras</th>
                 <th>Producto y Categoría</th>
                 <th>Detalle Lote / Proveedor</th>
-                <th style="width: 170px">Vencimiento (≤ {{ diasUmbralVencimiento }} d)</th>
+                <th style="width: 170px">Fecha Vencimiento</th>
                 <th class="text-right" style="width: 130px">Costo Unit. / Total</th>
                 <th class="text-right" style="width: 150px">Precio Venta / Oferta</th>
                 <th class="text-center" style="width: 110px">Stock Disp.</th>
