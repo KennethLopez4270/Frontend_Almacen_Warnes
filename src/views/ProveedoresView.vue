@@ -1049,9 +1049,6 @@ onMounted(async () => {
         </div>
 
         <div class="prov-modal-footer">
-          <button type="button" class="prov-btn-secondary" @click="modalFichaVisible = false">
-            Cerrar Ficha
-          </button>
         </div>
       </div>
     </div>
