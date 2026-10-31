@@ -287,13 +287,42 @@ export const inventarioService = {
    */
   async rechazarPendiente(
     id: number,
+    motivoOUsuario?: string | number | null,
     usuarioRevision: number = 2
   ): Promise<{ mensaje: string; inventarioPendienteId: number }> {
+    let motivo: string | undefined = undefined
+    let usuarioRev = usuarioRevision
+
+    if (typeof motivoOUsuario === 'number') {
+      usuarioRev = motivoOUsuario
+    } else if (typeof motivoOUsuario === 'string') {
+      motivo = motivoOUsuario
+    }
+
     const response = await api.put<{ mensaje: string; inventarioPendienteId: number }>(
       `/pendientes/${id}/rechazar`,
       null,
       {
-        params: { usuarioRevision },
+        params: { motivo, usuarioRevision: usuarioRev },
+      }
+    )
+    return response.data
+  },
+
+  /**
+   * PUT /pendientes/{id}/observar
+   * Supervisor devuelve el registro al cajero para corrección (estado = 4).
+   */
+  async observarPendiente(
+    id: number,
+    observacion?: string,
+    usuarioRevision: number = 2
+  ): Promise<{ mensaje: string; inventarioPendienteId: number }> {
+    const response = await api.put<{ mensaje: string; inventarioPendienteId: number }>(
+      `/pendientes/${id}/observar`,
+      null,
+      {
+        params: { observacion, usuarioRevision },
       }
     )
     return response.data

@@ -61,7 +61,44 @@ export const MAPA_ROLES: Record<number, ConceptoItem> = {
 }
 
 // ====================================================================
-// 2. ESTADOS DEL CATALOGO DE PRODUCTOS (`estado` en productos / conceptos grupo 3)
+// 2. CATEGORIAS DE PRODUCTO (`categoria_id` en productos / conceptos grupo 2)
+// ====================================================================
+
+export const CATEGORIAS_PRODUCTO = {
+  ALIMENTOS: 1,
+  BEBIDAS: 2,
+  JUGUETES: 3,
+} as const
+
+export const MAPA_CATEGORIAS: Record<number, ConceptoItem> = {
+  [CATEGORIAS_PRODUCTO.ALIMENTOS]: {
+    id: 6,
+    codigo: 1,
+    label: 'Alimentos',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0'
+  },
+  [CATEGORIAS_PRODUCTO.BEBIDAS]: {
+    id: 7,
+    codigo: 2,
+    label: 'Bebidas',
+    bg: '#EFF6FF',
+    text: '#1E40AF',
+    border: '#BFDBFE'
+  },
+  [CATEGORIAS_PRODUCTO.JUGUETES]: {
+    id: 8,
+    codigo: 3,
+    label: 'Juguetes',
+    bg: '#FAF5FF',
+    text: '#6B21A8',
+    border: '#E9D5FF'
+  }
+}
+
+// ====================================================================
+// 3. ESTADOS DEL CATALOGO DE PRODUCTOS (`estado` en productos / conceptos grupo 3)
 // ====================================================================
 
 export const ESTADOS_PRODUCTO = {
@@ -98,63 +135,83 @@ export const MAPA_ESTADOS_PRODUCTO: Record<number, ConceptoItem> = {
 }
 
 // ====================================================================
-// 3. ESTADOS DE LA SALA DE ESPERA (`estado` en inventario_pendientes / conceptos grupo 7)
+// 4. METODOS DE PAGO / VENTA (`metodo_venta` en ventas y movimientos / conceptos grupo 4)
 // ====================================================================
 
-export const ESTADOS_SALA_ESPERA = {
-  PENDIENTE: 1,
-  APROBADO: 2,
-  RECHAZADO: 3,
+export const METODOS_VENTA = {
+  EFECTIVO: 1,
+  QR: 2,
+  QR_SIMPLE: 2, // alias compatibilidad
+  TARJETA: 3,
+  MIXTO: 4,
 } as const
 
-export const MAPA_ESTADOS_SALA_ESPERA: Record<number, ConceptoItem> = {
-  [ESTADOS_SALA_ESPERA.PENDIENTE]: {
-    id: 1,
+export const MAPA_METODOS_VENTA: Record<number, ConceptoItem> = {
+  [METODOS_VENTA.EFECTIVO]: {
+    id: 14,
     codigo: 1,
-    label: 'Pendiente de Revisión',
-    bg: '#FFFBEB',
-    text: '#B45309',
-    border: '#FDE68A'
+    label: 'Efectivo',
+    bg: '#ECFDF5',
+    text: '#065F46',
+    border: '#A7F3D0'
   },
-  [ESTADOS_SALA_ESPERA.APROBADO]: {
-    id: 2,
+  [METODOS_VENTA.QR]: {
+    id: 15,
     codigo: 2,
-    label: 'Aprobado',
-    bg: '#F0FDF4',
-    text: '#166534',
-    border: '#BBF7D0'
+    label: 'QR',
+    bg: '#FAF5FF',
+    text: '#6B21A8',
+    border: '#E9D5FF'
   },
-  [ESTADOS_SALA_ESPERA.RECHAZADO]: {
-    id: 3,
+  [METODOS_VENTA.TARJETA]: {
+    id: 16,
     codigo: 3,
-    label: 'Rechazado',
-    bg: '#FEF2F2',
-    text: '#991B1B',
-    border: '#FECACA'
+    label: 'Tarjeta',
+    bg: '#EFF6FF',
+    text: '#1E40AF',
+    border: '#BFDBFE'
+  },
+  [METODOS_VENTA.MIXTO]: {
+    id: 17,
+    codigo: 4,
+    label: 'Mixto',
+    bg: '#FFF7ED',
+    text: '#9A3412',
+    border: '#FED7AA'
   }
 }
 
 // ====================================================================
-// 4. ESTADOS DE VENTA (`estado` en ventas / conceptos grupo 4)
+// 5. ESTADO DE LAS VENTAS (`estado` en ventas / conceptos grupo 5)
 // ====================================================================
 
 export const ESTADOS_VENTA = {
-  COMPLETADA: 1,
-  ANULADA: 2,
+  PENDIENTE: 1,
+  FINALIZADA: 2,
+  COMPLETADA: 2, // alias compatibilidad
+  ANULADA: 3,
 } as const
 
 export const MAPA_ESTADOS_VENTA: Record<number, ConceptoItem> = {
-  [ESTADOS_VENTA.COMPLETADA]: {
-    id: 1,
+  [ESTADOS_VENTA.PENDIENTE]: {
+    id: 19,
     codigo: 1,
-    label: 'Completada',
+    label: 'Pendiente',
+    bg: '#FFFBEB',
+    text: '#B45309',
+    border: '#FDE68A'
+  },
+  [ESTADOS_VENTA.FINALIZADA]: {
+    id: 20,
+    codigo: 2,
+    label: 'Finalizada',
     bg: '#F0FDF4',
     text: '#166534',
     border: '#BBF7D0'
   },
   [ESTADOS_VENTA.ANULADA]: {
-    id: 2,
-    codigo: 2,
+    id: 21,
+    codigo: 3,
     label: 'Anulada',
     bg: '#FEF2F2',
     text: '#991B1B',
@@ -163,85 +220,80 @@ export const MAPA_ESTADOS_VENTA: Record<number, ConceptoItem> = {
 }
 
 // ====================================================================
-// 5. METODOS DE VENTA / PAGO (`metodo_venta` en ventas y movimientos / conceptos grupo 5)
+// 6. TIPOS DE MOVIMIENTO (`tipo_movimiento` en movimientos / conceptos grupo 6)
 // ====================================================================
 
-export const METODOS_VENTA = {
-  EFECTIVO: 1,
-  QR_SIMPLE: 2,
-  TARJETA: 3,
-  MIXTO: 4,
+export const TIPOS_MOVIMIENTO = {
+  ENTRADA: 1,
+  SALIDA: 2,
+  INGRESO_VENTA: 1, // alias compatibilidad
+  GASTO_OPERATIVO: 2, // alias compatibilidad
 } as const
 
-export const MAPA_METODOS_VENTA: Record<number, ConceptoItem> = {
-  [METODOS_VENTA.EFECTIVO]: {
-    id: 1,
-    codigo: 1,
-    label: 'Efectivo',
-    bg: '#ECFDF5',
-    text: '#065F46',
-    border: '#A7F3D0'
-  },
-  [METODOS_VENTA.QR_SIMPLE]: {
-    id: 2,
-    codigo: 2,
-    label: 'Pago QR Simple',
-    bg: '#FAF5FF',
-    text: '#6B21A8',
-    border: '#E9D5FF'
-  },
-  [METODOS_VENTA.TARJETA]: {
-    id: 3,
-    codigo: 3,
-    label: 'Tarjeta Débito/Crédito',
-    bg: '#EFF6FF',
-    text: '#1E40AF',
-    border: '#BFDBFE'
-  },
-  [METODOS_VENTA.MIXTO]: {
-    id: 4,
-    codigo: 4,
-    label: 'Pago Mixto',
-    bg: '#FFF7ED',
-    text: '#9A3412',
-    border: '#FED7AA'
-  }
-}
-
-// ====================================================================
-// 6. TIPOS DE MOVIMIENTO DE CAJA (`tipo_movimiento` en movimientos / conceptos grupo 6)
-// ====================================================================
-
-export const TIPOS_MOVIMIENTO_CAJA = {
-  INGRESO_VENTA: 1,
-  GASTO_OPERATIVO: 2,
-  PAGO_PROVEEDOR: 3,
-} as const
+export const TIPOS_MOVIMIENTO_CAJA = TIPOS_MOVIMIENTO
 
 export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
-  [TIPOS_MOVIMIENTO_CAJA.INGRESO_VENTA]: {
-    id: 1,
+  [TIPOS_MOVIMIENTO.ENTRADA]: {
+    id: 23,
     codigo: 1,
-    label: 'Ingreso por Venta',
+    label: 'Entrada',
     bg: '#F0FDF4',
     text: '#166534',
     border: '#BBF7D0'
   },
-  [TIPOS_MOVIMIENTO_CAJA.GASTO_OPERATIVO]: {
-    id: 2,
+  [TIPOS_MOVIMIENTO.SALIDA]: {
+    id: 24,
     codigo: 2,
-    label: 'Gasto Operativo / Servicios',
+    label: 'Salida',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA'
+  }
+}
+
+// ====================================================================
+// 7. ESTADOS DE LA SALA DE ESPERA (`estado` en inventario_pendientes / conceptos grupo 7)
+// ====================================================================
+
+export const ESTADOS_SALA_ESPERA = {
+  PENDIENTE: 1,
+  APROBADO: 2,
+  RECHAZADO: 3,
+  OBSERVADO: 4,
+} as const
+
+export const MAPA_ESTADOS_SALA_ESPERA: Record<number, ConceptoItem> = {
+  [ESTADOS_SALA_ESPERA.PENDIENTE]: {
+    id: 26,
+    codigo: 1,
+    label: 'Pendiente de Revisión',
+    bg: '#FFFBEB',
+    text: '#B45309',
+    border: '#FDE68A'
+  },
+  [ESTADOS_SALA_ESPERA.APROBADO]: {
+    id: 27,
+    codigo: 2,
+    label: 'Aprobado',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0'
+  },
+  [ESTADOS_SALA_ESPERA.RECHAZADO]: {
+    id: 28,
+    codigo: 3,
+    label: 'Rechazado',
     bg: '#FEF2F2',
     text: '#991B1B',
     border: '#FECACA'
   },
-  [TIPOS_MOVIMIENTO_CAJA.PAGO_PROVEEDOR]: {
-    id: 3,
-    codigo: 3,
-    label: 'Pago a Proveedor',
-    bg: '#F0F9FF',
-    text: '#0369A1',
-    border: '#BAE6FD'
+  [ESTADOS_SALA_ESPERA.OBSERVADO]: {
+    id: 29,
+    codigo: 4,
+    label: 'Observado por Supervisor',
+    bg: '#FFF7ED',
+    text: '#C2410C',
+    border: '#FED7AA'
   }
 }
 
@@ -261,6 +313,11 @@ const ITEM_DESCONOCIDO: ConceptoItem = {
 export function getBadgeRol(rolId: number | null | undefined): ConceptoItem {
   if (!rolId) return ITEM_DESCONOCIDO
   return MAPA_ROLES[rolId] || { ...ITEM_DESCONOCIDO, label: `Rol #${rolId}` }
+}
+
+export function getBadgeCategoria(categoriaId: number | null | undefined): ConceptoItem {
+  if (!categoriaId) return ITEM_DESCONOCIDO
+  return MAPA_CATEGORIAS[categoriaId] || { ...ITEM_DESCONOCIDO, label: `Categoría #${categoriaId}` }
 }
 
 export function getBadgeEstadoProducto(estadoId: number | null | undefined): ConceptoItem {
