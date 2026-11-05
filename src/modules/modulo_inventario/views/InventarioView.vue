@@ -782,7 +782,7 @@ async function confirmarRechazo() {
   const motivo = motivoRechazo.value.trim()
 
   try {
-    const res = await inventarioService.rechazarPendiente(id, rolActivo.value)
+    const res = await inventarioService.rechazarPendiente(id, motivo, rolActivo.value)
 
     const historial = obtenerHistorialAuditoria()
     const rechazado: InventarioPendiente = {

@@ -6,6 +6,7 @@ import {
   MAPA_ROLES,
   MAPA_ESTADOS_PRODUCTO,
   MAPA_ESTADOS_SALA_ESPERA,
+  ESTADOS_SALA_ESPERA,
   getBadgeRol,
   getBadgeEstadoProducto,
   getBadgeEstadoPendiente,
@@ -495,7 +496,8 @@ const conteoEspera = computed(() => {
     todos: items.length,
     pendientes: items.filter((p) => p.estado === 1).length,
     aprobados: items.filter((p) => p.estado === 2).length,
-    rechazados: items.filter((p) => p.estado === 3).length
+    rechazados: items.filter((p) => p.estado === 3).length,
+    observados: items.filter((p) => p.estado === 4).length
   }
 })
 
@@ -789,7 +791,7 @@ async function confirmarRechazo() {
   const motivo = motivoRechazo.value.trim()
 
   try {
-    const res = await inventarioService.rechazarPendiente(id, rolActivo.value)
+    const res = await inventarioService.rechazarPendiente(id, motivo, rolActivo.value)
 
     const historial = obtenerHistorialAuditoria()
     const rechazado: InventarioPendiente = {
@@ -824,6 +826,75 @@ async function confirmarRechazo() {
     await recargarTodo()
   } catch (err: any) {
     agregarToast('Error al Rechazar', extraerMensajeError(err), 'danger')
+  }
+}
+
+// Modal de Observación / Mandar a Corregir
+const modalObservarVisible = ref(false)
+const pendienteAObservar = ref<InventarioPendiente | null>(null)
+const motivoObservacion = ref('')
+const enviandoObservacion = ref(false)
+
+function abrirModalObservar(pendiente: InventarioPendiente) {
+  if (rolActivo.value === ROLES.CAJERO) {
+    agregarToast('Acceso Denegado', 'El rol Cajero no puede mandar a corregir registros.', 'danger')
+    return
+  }
+  pendienteAObservar.value = pendiente
+  motivoObservacion.value = ''
+  modalObservarVisible.value = true
+}
+
+async function confirmarObservacion() {
+  if (!pendienteAObservar.value) return
+  if (!motivoObservacion.value.trim()) {
+    agregarToast('Dato Requerido', 'Por favor especifique la instrucción u observación de corrección para el cajero.', 'warning')
+    return
+  }
+  const id = pendienteAObservar.value.inventario_pendiente_id || pendienteAObservar.value.inventarioPendienteId
+  if (!id) return
+
+  enviandoObservacion.value = true
+  const textoObservacion = motivoObservacion.value.trim()
+
+  try {
+    const res = await inventarioService.observarPendiente(id, textoObservacion, rolActivo.value)
+
+    const historial = obtenerHistorialAuditoria()
+    const observado: InventarioPendiente = {
+      ...pendienteAObservar.value,
+      estado: 4, // 4: Observado / Para Corrección
+      usuario_revision: rolActivo.value,
+      usuarioRevision: rolActivo.value,
+      fecha_revision: new Date().toISOString(),
+      fechaRevision: new Date().toISOString(),
+      observacion_revision: textoObservacion,
+      observacionRevision: textoObservacion
+    }
+    const idx = historial.findIndex((p) => p.inventario_pendiente_id === id)
+    if (idx >= 0) {
+      historial[idx] = observado
+    } else {
+      historial.unshift(observado)
+    }
+    guardarHistorialAuditoria(historial)
+
+    const locIdx = inventarioPendientes.value.findIndex((p) => p.inventario_pendiente_id === id)
+    if (locIdx >= 0) {
+      inventarioPendientes.value[locIdx] = observado
+    }
+
+    agregarToast(
+      'Enviado a Corrección',
+      res.mensaje || `Registro #${id} devuelto al cajero con observación para su rectificación.`,
+      'warning'
+    )
+    modalObservarVisible.value = false
+    await recargarTodo()
+  } catch (err: any) {
+    agregarToast('Error al Observar', extraerMensajeError(err), 'danger')
+  } finally {
+    enviandoObservacion.value = false
   }
 }
 
@@ -868,7 +939,7 @@ function onEditarCalculoPrecioLote() {
 }
 
 function abrirModalEditarPendiente(pendiente: InventarioPendiente) {
-  if (rolActivo.value === ROLES.CAJERO) {
+  if (rolActivo.value === ROLES.CAJERO && pendiente.estado !== ESTADOS_SALA_ESPERA.OBSERVADO) {
     agregarToast('Acceso Restringido', 'Solo Supervisores o Propietarios pueden rectificar registros en Sala de Espera.', 'warning')
     return
   }
@@ -888,7 +959,7 @@ function abrirModalEditarPendiente(pendiente: InventarioPendiente) {
   modalEditarPendienteVisible.value = true
 }
 
-// 1. Guardar Rectificación (PUT /pendientes/{id}) -> Permanece en Sala de Espera
+// 1. Guardar Rectificación (PUT /pendientes/{id}) -> Permanece en Sala de Espera (Flujo 4 -> 1)
 async function guardarRectificacionPendiente() {
   if (!pendienteEnEdicion.value) return
   const id = pendienteEnEdicion.value.inventario_pendiente_id || pendienteEnEdicion.value.inventarioPendienteId
@@ -915,7 +986,7 @@ async function guardarRectificacionPendiente() {
   try {
     await inventarioService.actualizarPendiente(id, cambios)
 
-    // Actualizar historial local y memoria
+    // Actualizar historial local y memoria (retorna a estado 1: Pendiente de Revisión)
     const historial = obtenerHistorialAuditoria()
     const actualizado: InventarioPendiente = {
       ...pendienteEnEdicion.value,
@@ -937,12 +1008,12 @@ async function guardarRectificacionPendiente() {
       precioLote: Number(formEditarPendiente.precio_lote),
       fecha_vencimiento: formEditarPendiente.fecha_vencimiento || null,
       fechaVencimiento: formEditarPendiente.fecha_vencimiento || null,
-      estado: 1, // Permanece en espera
-      fecha_revision: new Date().toISOString(),
-      fechaRevision: new Date().toISOString(),
-      usuario_revision: rolActivo.value,
-      usuarioRevision: rolActivo.value,
-      observacion_revision: formEditarPendiente.observacion_rectificacion.trim() || 'Datos del lote rectificados por Supervisor.'
+      estado: 1, // Retorna a estado 1 (Pendiente de Revisión)
+      fecha_revision: null,
+      fechaRevision: null,
+      usuario_revision: null,
+      usuarioRevision: null,
+      observacion_revision: formEditarPendiente.observacion_rectificacion.trim() || (rolActivo.value === ROLES.CAJERO ? 'Subsanado y re-enviado por Cajero para auditoría.' : 'Datos del lote rectificados por Supervisor.')
     }
 
     const idx = historial.findIndex((p) => p.inventario_pendiente_id === id)
@@ -958,9 +1029,13 @@ async function guardarRectificacionPendiente() {
       inventarioPendientes.value[locIdx] = actualizado
     }
 
+    const mensajeExito = rolActivo.value === ROLES.CAJERO
+      ? `Registro #${id} subsanado y re-enviado a Sala de Espera para nueva revisión del Supervisor.`
+      : `Registro #${id} rectificado exitosamente por ${resolverNombreUsuario(rolActivo.value)}. Permanece en espera para su aprobación.`
+
     agregarToast(
-      'Rectificación Guardada',
-      `Registro #${id} rectificado exitosamente por ${resolverNombreUsuario(rolActivo.value)}. Permanece en espera para su aprobación.`,
+      rolActivo.value === ROLES.CAJERO ? 'Corrección Re-enviada' : 'Rectificación Guardada',
+      mensajeExito,
       'success'
     )
     modalEditarPendienteVisible.value = false
@@ -1720,6 +1795,14 @@ onMounted(() => {
           </button>
           <button
             type="button"
+            class="inv-status-pill pill-orange"
+            :class="{ active: filterEstadoPendiente === 4 }"
+            @click="filterEstadoPendiente = 4"
+          >
+            Observados ({{ conteoEspera.observados }})
+          </button>
+          <button
+            type="button"
             class="inv-status-pill pill-green"
             :class="{ active: filterEstadoPendiente === 2 }"
             @click="filterEstadoPendiente = 2"
@@ -2073,6 +2156,15 @@ onMounted(() => {
                       <span>Cód: {{ item.codigo_interno }}</span>
                       <span v-if="item.codigo_barras">Barras: {{ item.codigo_barras }}</span>
                     </div>
+                    <!-- NOTA DE OBSERVACION DEL SUPERVISOR CUANDO ESTADO = 4 -->
+                    <div v-if="item.estado === 4 && (item.observacion_revision || item.observacionRevision)" class="inv-observed-note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs flex-shrink-0" style="width: 14px; height: 14px; margin-top: 1px;">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <span><strong>Obs. Supervisor:</strong> {{ item.observacion_revision || item.observacionRevision }}</span>
+                    </div>
                   </div>
                 </td>
 
@@ -2101,7 +2193,7 @@ onMounted(() => {
                   <span class="inv-price-regular font-mono">{{ formatMontoBs(item.precio_venta) }}</span>
                 </td>
 
-                <!-- Estado Auditoría (Aprobado / Rechazado / Pendiente) -->
+                <!-- Estado Auditoría (Aprobado / Rechazado / Observado / Pendiente) -->
                 <td class="text-center">
                   <div class="inv-status-audit-wrapper">
                     <span v-if="item.estado === 2" class="inv-badge-audit approved">
@@ -2111,6 +2203,10 @@ onMounted(() => {
                     <span v-else-if="item.estado === 3" class="inv-badge-audit rejected">
                       <span class="inv-badge-dot"></span>
                       <span>Rechazado</span>
+                    </span>
+                    <span v-else-if="item.estado === 4" class="inv-badge-audit observed">
+                      <span class="inv-badge-dot"></span>
+                      <span>Observado</span>
                     </span>
                     <span v-else class="inv-badge-audit pending">
                       <span class="inv-badge-dot"></span>
@@ -2126,7 +2222,7 @@ onMounted(() => {
                   </div>
                 </td>
 
-                <!-- Acciones de Supervisor (Detalles, Editar, Aprobar, Rechazar) -->
+                <!-- Acciones de Supervisor / Cajero (Detalles, Editar, Aprobar, Observar, Rechazar) -->
                 <td class="text-center">
                   <!-- CASO 1: PENDIENTE (ESTADO = 1) -->
                   <div v-if="item.estado === 1" class="inv-audit-actions">
@@ -2172,6 +2268,18 @@ onMounted(() => {
                         <span>Aprobar</span>
                       </button>
 
+                      <!-- Mandar a Corregir -->
+                      <button
+                        type="button"
+                        class="inv-btn-observe-sm"
+                        @click="abrirModalObservar(item)"
+                        title="Mandar a corregir al cajero con observación"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      </button>
+
                       <!-- Rechazar -->
                       <button
                         type="button"
@@ -2193,6 +2301,67 @@ onMounted(() => {
                         </svg>
                         En espera
                       </span>
+                    </template>
+                  </div>
+
+                  <!-- CASO 2: OBSERVADO / PARA CORRECCION (ESTADO = 4) -->
+                  <div v-else-if="item.estado === 4" class="inv-audit-actions">
+                    <!-- Botón de Detalles -->
+                    <button
+                      type="button"
+                      class="inv-btn-detail-sm"
+                      @click="abrirModalDetalles(item)"
+                      title="Ver trazabilidad completa, observaciones y personal"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>Detalles</span>
+                    </button>
+
+                    <!-- Si es CAJERO: botón "Subsanar / Corregir" -->
+                    <template v-if="rolActivo === ROLES.CAJERO">
+                      <button
+                        type="button"
+                        class="inv-btn-correct-sm"
+                        @click="abrirModalEditarPendiente(item)"
+                        title="Subsanar datos observados y reenviar a auditoría"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        <span>Subsanar / Corregir</span>
+                      </button>
+                    </template>
+
+                    <!-- Si es SUPERVISOR/PROPIETARIO sobre ítem observado -->
+                    <template v-else>
+                      <button
+                        type="button"
+                        class="inv-btn-edit-sm"
+                        @click="abrirModalEditarPendiente(item)"
+                        title="Editar datos"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="inv-btn-reject-sm"
+                        @click="abrirModalRechazo(item)"
+                        title="Rechazar ingreso y registrar motivo"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
                     </template>
                   </div>
 
@@ -2726,7 +2895,60 @@ onMounted(() => {
     </div>
 
     <!-- ============================================================= -->
-    <!-- MODAL 5: EDITAR Y RECTIFICAR PENDIENTE (SUPERVISOR) -->
+    <!-- MODAL 4B: MANDAR A CORREGIR LOTE EN SALA DE ESPERA -->
+    <!-- ============================================================= -->
+    <div v-if="modalObservarVisible" class="inv-modal-overlay">
+      <div class="inv-modal-container small">
+        <header class="inv-modal-header warning">
+          <div class="inv-modal-header-icon warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-sm">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="inv-modal-title">Mandar a Corregir al Cajero</h2>
+            <p class="inv-modal-subtitle">Registro #{{ pendienteAObservar?.inventario_pendiente_id }} - {{ pendienteAObservar?.nombre_producto }}</p>
+          </div>
+          <button type="button" class="inv-btn-close" @click="modalObservarVisible = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-sm">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </header>
+
+        <form @submit.prevent="confirmarObservacion" class="inv-modal-body">
+          <div class="inv-field-group">
+            <label class="inv-label">Instrucción u Observación para el Cajero *</label>
+            <textarea
+              v-model="motivoObservacion"
+              rows="3"
+              class="inv-input"
+              placeholder="Ej. El precio de compra no coincide con la factura adjunta, verificar costo unitario y fecha de vencimiento..."
+              required
+            ></textarea>
+            <span class="inv-text-muted-sm">
+              El registro cambiará a estado "Observado" (4) y se notificará al cajero para que subsane los datos.
+            </span>
+          </div>
+
+          <footer class="inv-modal-footer">
+            <button type="button" class="inv-btn-secondary" @click="modalObservarVisible = false">
+              Cancelar
+            </button>
+            <button type="submit" class="inv-btn-warning" :disabled="enviandoObservacion">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>{{ enviandoObservacion ? 'Enviando...' : 'Mandar a Corregir' }}</span>
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 5: EDITAR Y RECTIFICAR PENDIENTE (SUPERVISOR / CAJERO) -->
     <!-- ============================================================= -->
     <div v-if="modalEditarPendienteVisible" class="inv-modal-overlay" @click.self="modalEditarPendienteVisible = false">
       <div class="inv-modal-container inv-modal-edit-container">
@@ -2738,9 +2960,9 @@ onMounted(() => {
             </svg>
           </div>
           <div>
-            <h2 class="inv-modal-title">Rectificar Datos de Recepción</h2>
+            <h2 class="inv-modal-title">{{ rolActivo === ROLES.CAJERO ? 'Subsanar Registro de Recepción' : 'Rectificar Datos de Recepción' }}</h2>
             <p class="inv-modal-subtitle">
-              Registro #PEND-{{ pendienteEnEdicion?.inventario_pendiente_id }} &bull; Corrección de costos, cantidades o código
+              {{ rolActivo === ROLES.CAJERO ? 'Corrige las observaciones del Supervisor y reenvía a revisión' : `Registro #PEND-${pendienteEnEdicion?.inventario_pendiente_id} • Corrección de costos, cantidades o código` }}
             </p>
           </div>
           <button type="button" class="inv-btn-close" @click="modalEditarPendienteVisible = false">
@@ -2752,6 +2974,26 @@ onMounted(() => {
         </header>
 
         <form @submit.prevent="guardarYaprobarPendiente" class="inv-modal-body">
+          <!-- NOTA DE OBSERVACION DEL SUPERVISOR SI EL LOTE ESTA OBSERVADO -->
+          <div
+            v-if="pendienteEnEdicion?.observacion_revision || pendienteEnEdicion?.observacionRevision"
+            class="inv-alert-box-warning"
+          >
+            <div class="inv-alert-box-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-sm">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div>
+              <strong>Instrucción de Corrección del Supervisor:</strong>
+              <p class="inv-alert-box-text">
+                {{ pendienteEnEdicion.observacion_revision || pendienteEnEdicion.observacionRevision }}
+              </p>
+            </div>
+          </div>
+
           <div class="inv-grid-2">
             <div class="inv-field-group">
               <label class="inv-label">Nombre del Producto</label>
@@ -2842,12 +3084,12 @@ onMounted(() => {
           </div>
 
           <div class="inv-field-group">
-            <label class="inv-label">Motivo o Nota de Rectificación (opcional)</label>
+            <label class="inv-label">{{ rolActivo === ROLES.CAJERO ? 'Nota de Subsanación para el Supervisor (opcional)' : 'Motivo o Nota de Rectificación (opcional)' }}</label>
             <input
               v-model="formEditarPendiente.observacion_rectificacion"
               type="text"
               class="inv-input"
-              placeholder="Ej: Se corrigió precio de venta y fecha de caducidad según empaque físico"
+              :placeholder="rolActivo === ROLES.CAJERO ? 'Ej: Corregido costo según factura adjunta #4521' : 'Ej: Se corrigió precio de venta y fecha de caducidad según empaque físico'"
             />
           </div>
 
@@ -2856,7 +3098,7 @@ onMounted(() => {
               Cancelar
             </button>
 
-            <!-- Opcion 1: Guardar rectificación y mantener en espera -->
+            <!-- Opcion 1: Guardar rectificación / Subsanar (disponible para Supervisor y Cajero) -->
             <button
               type="button"
               class="inv-btn-rectify"
@@ -2868,11 +3110,15 @@ onMounted(() => {
                 <polyline points="17 21 17 13 7 13 7 21" />
                 <polyline points="7 3 7 8 15 8" />
               </svg>
-              <span>{{ guardandoRectificacion ? 'Guardando...' : 'Guardar Rectificación' }}</span>
+              <span>{{ guardandoRectificacion ? 'Guardando...' : (rolActivo === ROLES.CAJERO ? 'Subsanar y Re-enviar' : 'Guardar Rectificación') }}</span>
             </button>
 
-            <!-- Opcion 2: Guardar y Aprobar directamente -->
-            <button type="submit" class="inv-btn-primary">
+            <!-- Opcion 2: Guardar y Aprobar directamente (solo Supervisor/Propietario) -->
+            <button
+              v-if="rolActivo === ROLES.SUPERVISOR || rolActivo === ROLES.PROPIETARIO"
+              type="submit"
+              class="inv-btn-primary"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
@@ -2970,6 +3216,7 @@ onMounted(() => {
                   :class="{
                     approved: pendienteEnDetalle.estado === 2,
                     rejected: pendienteEnDetalle.estado === 3,
+                    observed: pendienteEnDetalle.estado === 4,
                     wait: pendienteEnDetalle.estado === 1
                   }"
                 >
@@ -2980,6 +3227,9 @@ onMounted(() => {
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
+                  <svg v-else-if="pendienteEnDetalle.estado === 4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="inv-icon-xs">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
                   <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
@@ -2988,7 +3238,7 @@ onMounted(() => {
                 <div class="inv-timeline-content">
                   <div class="inv-timeline-header">
                     <span class="inv-timeline-action">
-                      {{ pendienteEnDetalle.estado === 2 ? 'Aprobado y Asentado por' : (pendienteEnDetalle.estado === 3 ? 'Rechazado y Anulado por' : 'Auditoría Pendiente') }}
+                      {{ pendienteEnDetalle.estado === 2 ? 'Aprobado y Asentado por' : (pendienteEnDetalle.estado === 3 ? 'Rechazado y Anulado por' : (pendienteEnDetalle.estado === 4 ? 'Devuelto para Corrección por' : 'Auditoría Pendiente')) }}
                     </span>
                     <span v-if="pendienteEnDetalle.fecha_revision" class="inv-timeline-time font-mono">
                       {{ formatearFechaHora(pendienteEnDetalle.fecha_revision) }}
@@ -3003,6 +3253,9 @@ onMounted(() => {
                   </p>
                   <p v-else-if="pendienteEnDetalle.estado === 3" class="inv-timeline-desc text-rose-700">
                     Registro rechazado. La mercadería no ingresó a inventario y fue devuelta al proveedor o descartada.
+                  </p>
+                  <p v-else-if="pendienteEnDetalle.estado === 4" class="inv-timeline-desc text-orange-700">
+                    Registro observado. El supervisor devolvió el ingreso al cajero para que subsane datos de costos o catálogo.
                   </p>
                   <p v-else class="inv-timeline-desc text-amber-700">
                     Esperando verificación de cantidad física, costo de factura y caducidad por el Supervisor de turno.
@@ -3025,16 +3278,17 @@ onMounted(() => {
               :class="{
                 'obs-approved': pendienteEnDetalle.estado === 2,
                 'obs-rejected': pendienteEnDetalle.estado === 3,
+                'obs-observed': pendienteEnDetalle.estado === 4,
                 'obs-pending': pendienteEnDetalle.estado === 1
               }"
             >
               <div class="inv-obs-header">
                 <strong>
-                  {{ pendienteEnDetalle.estado === 3 ? 'Motivo del Rechazo:' : (pendienteEnDetalle.estado === 2 ? 'Nota de Auditoría:' : 'Observaciones de Ingreso:') }}
+                  {{ pendienteEnDetalle.estado === 3 ? 'Motivo del Rechazo:' : (pendienteEnDetalle.estado === 2 ? 'Nota de Auditoría:' : (pendienteEnDetalle.estado === 4 ? 'Instrucción de Corrección:' : 'Observaciones de Ingreso:')) }}
                 </strong>
               </div>
               <p class="inv-obs-text">
-                {{ pendienteEnDetalle.observacion_revision || (pendienteEnDetalle.estado === 2 ? 'Aprobado sin observaciones adicionales. La mercadería cumple satisfactoriamente con los estándares de calidad y control de precios.' : (pendienteEnDetalle.estado === 3 ? 'Rechazado por el supervisor.' : 'Sin observaciones registradas durante la recepción.')) }}
+                {{ pendienteEnDetalle.observacion_revision || (pendienteEnDetalle.estado === 2 ? 'Aprobado sin observaciones adicionales. La mercadería cumple satisfactoriamente con los estándares de calidad y control de precios.' : (pendienteEnDetalle.estado === 3 ? 'Rechazado por el supervisor.' : (pendienteEnDetalle.estado === 4 ? 'Devuelto para corrección por el supervisor.' : 'Sin observaciones registradas durante la recepción.'))) }}
               </p>
             </div>
           </div>
@@ -3145,6 +3399,20 @@ onMounted(() => {
         </div>
 
         <footer class="inv-modal-footer">
+          <!-- SI ES OBSERVADO Y EL ROL ES CAJERO: ACCION PARA SUBSANAR -->
+          <template v-if="pendienteEnDetalle.estado === 4 && rolActivo === ROLES.CAJERO">
+            <button
+              type="button"
+              class="inv-btn-correct-sm"
+              @click="modalDetallesVisible = false; abrirModalEditarPendiente(pendienteEnDetalle)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <span>Subsanar / Corregir Observaciones</span>
+            </button>
+          </template>
 
           <!-- SI ES PENDIENTE Y EL ROL TIENE PERMISO: ACCIONES RAPIDAS -->
           <template v-if="pendienteEnDetalle.estado === 1 && (rolActivo === ROLES.SUPERVISOR || rolActivo === ROLES.PROPIETARIO)">
@@ -3158,6 +3426,17 @@ onMounted(() => {
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
               <span>Editar / Rectificar</span>
+            </button>
+
+            <button
+              type="button"
+              class="inv-btn-warning px-3"
+              @click="modalDetallesVisible = false; abrirModalObservar(pendienteEnDetalle)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Mandar a Corregir</span>
             </button>
 
             <button
@@ -3453,6 +3732,56 @@ onMounted(() => {
 
 .inv-btn-danger:hover {
   background-color: #7f1d1d;
+}
+
+.inv-btn-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: #ea580c;
+  color: #ffffff;
+  border: 1px solid #ea580c;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.inv-btn-warning:hover {
+  background-color: #c2410c;
+}
+
+.inv-btn-warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inv-alert-box-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #ea580c;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  color: #9a3412;
+}
+
+.inv-alert-box-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #ea580c;
+}
+
+.inv-alert-box-text {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+  color: #7c2d12;
 }
 
 /* DRAWER NOTIFICACIONES */
@@ -4268,6 +4597,61 @@ onMounted(() => {
   background-color: #fee2e2;
 }
 
+.inv-btn-observe-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #fed7aa;
+  background-color: #fff7ed;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.inv-btn-observe-sm:hover {
+  background-color: #ffedd5;
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.inv-btn-correct-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #fed7aa;
+  background-color: #ea580c;
+  color: #ffffff;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.inv-btn-correct-sm:hover {
+  background-color: #c2410c;
+}
+
+.inv-observed-note {
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background-color: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-left: 3px solid #ea580c;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #9a3412;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  line-height: 1.35;
+}
+
 .inv-wait-label {
   display: inline-flex;
   align-items: center;
@@ -4349,6 +4733,10 @@ onMounted(() => {
   border-bottom-color: #fecaca;
 }
 
+.inv-modal-header.warning {
+  border-bottom-color: #fed7aa;
+}
+
 .inv-modal-header-icon {
   width: 38px;
   height: 38px;
@@ -4363,6 +4751,11 @@ onMounted(() => {
 .inv-modal-header-icon.danger {
   background-color: #fef2f2;
   color: #991b1b;
+}
+
+.inv-modal-header-icon.warning {
+  background-color: #fff7ed;
+  color: #ea580c;
 }
 
 .inv-modal-title {
@@ -4946,6 +5339,12 @@ onMounted(() => {
   border-color: #d97706;
   box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
 }
+.inv-status-pill.pill-orange.active {
+  background: #ea580c;
+  color: #ffffff;
+  border-color: #c2410c;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
+}
 .inv-status-pill.pill-green.active {
   background: #10b981;
   color: #ffffff;
@@ -5009,6 +5408,11 @@ onMounted(() => {
   background-color: #fffbeb;
   color: #b45309;
   border: 1px solid #fde68a;
+}
+.inv-badge-audit.observed {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 .inv-badge-dot {
   width: 6px;
@@ -5233,6 +5637,10 @@ onMounted(() => {
   background: #fee2e2;
   color: #b91c1c;
 }
+.inv-timeline-marker.observed {
+  background: #ffedd5;
+  color: #c2410c;
+}
 .inv-timeline-marker.wait {
   background: #f1f5f9;
   color: #64748b;
@@ -5304,6 +5712,10 @@ onMounted(() => {
 .inv-detail-obs-card.obs-rejected {
   background: #fef2f2;
   border-color: #ef4444;
+}
+.inv-detail-obs-card.obs-observed {
+  background: #fff7ed;
+  border-color: #ea580c;
 }
 .inv-detail-obs-card.obs-pending {
   background: #fffbeb;
