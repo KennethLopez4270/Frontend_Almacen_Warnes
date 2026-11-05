@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+function handleLogout() {
+  authStore.logout()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -46,6 +56,27 @@ import { RouterView, RouterLink } from 'vue-router'
             <RouterLink to="/admin/configuracion" class="nav-item">Configuración</RouterLink>
           </div>
         </nav>
+
+        <!-- USUARIO AUTENTICADO EN HEADER -->
+        <div v-if="authStore.isAuthenticated" class="user-session-bar">
+          <div class="user-info-pill">
+            <span class="user-avatar-initial">{{ (authStore.usuario || 'U').charAt(0).toUpperCase() }}</span>
+            <div class="user-text-info">
+              <span class="user-display-name">{{ authStore.nombreCompleto }}</span>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                <ConceptoBadge tipo="rol" :valor="authStore.rolId" size="sm" />
+                <span v-if="authStore.sucursalId" class="user-branch-text">Suc. #{{ authStore.sucursalId }}</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-logout" @click="handleLogout" title="Cerrar Sesión">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -183,6 +214,85 @@ body {
   color: #ffffff;
   font-weight: 600;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* USUARIO EN BARRA SUPERIOR */
+.user-session-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.user-info-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-avatar-initial {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-text-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.user-display-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.user-branch-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #0369a1;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-logout svg {
+  width: 15px;
+  height: 15px;
+}
+
+.btn-logout:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
 }
 
 .app-main {

@@ -246,6 +246,46 @@ export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
 }
 
 // ====================================================================
+// 7. ESTADOS DE LA CUENTA DE USUARIO (`estado` en usuarios / conceptos grupo 8)
+// ====================================================================
+
+export const ESTADOS_USUARIO = {
+  ACTIVO: 1,
+  SOLICITA_RECUPERACION: 2,
+  BLOQUEADO: 3,
+} as const
+
+export const MAPA_ESTADOS_USUARIO: Record<number, ConceptoItem> = {
+  [ESTADOS_USUARIO.ACTIVO]: {
+    id: 1,
+    codigo: 1,
+    label: 'Activo',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0',
+    icon: 'check-circle'
+  },
+  [ESTADOS_USUARIO.SOLICITA_RECUPERACION]: {
+    id: 2,
+    codigo: 2,
+    label: 'Solicita Recuperación',
+    bg: '#FEF3C7',
+    text: '#92400E',
+    border: '#FDE68A',
+    icon: 'key'
+  },
+  [ESTADOS_USUARIO.BLOQUEADO]: {
+    id: 3,
+    codigo: 3,
+    label: 'Bloqueado',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA',
+    icon: 'lock'
+  }
+}
+
+// ====================================================================
 // 7. FUNCIONES HELPER PARA CONSUMO RAPIDO EN COMPONENTES
 // ====================================================================
 
@@ -286,5 +326,10 @@ export function getBadgeMetodoVenta(metodoId: number | null | undefined): Concep
 export function getBadgeTipoMovimiento(tipoId: number | null | undefined): ConceptoItem {
   if (!tipoId) return ITEM_DESCONOCIDO
   return MAPA_TIPOS_MOVIMIENTO[tipoId] || { ...ITEM_DESCONOCIDO, label: `Movimiento #${tipoId}` }
+}
+
+export function getBadgeEstadoUsuario(estadoId: number | null | undefined): ConceptoItem {
+  if (!estadoId) return ITEM_DESCONOCIDO
+  return MAPA_ESTADOS_USUARIO[estadoId] || { ...ITEM_DESCONOCIDO, label: `Estado #${estadoId}` }
 }
 

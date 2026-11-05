@@ -7,11 +7,12 @@ import {
   getBadgeEstadoVenta,
   getBadgeMetodoVenta,
   getBadgeTipoMovimiento,
+  getBadgeEstadoUsuario,
   type ConceptoItem
 } from '@/constants/mapeoEstados'
 
 const props = defineProps<{
-  tipo: 'rol' | 'estado_producto' | 'estado_pendiente' | 'sala_espera' | 'estado_venta' | 'metodo_venta' | 'tipo_movimiento'
+  tipo: 'rol' | 'estado_producto' | 'estado_pendiente' | 'sala_espera' | 'estado_venta' | 'metodo_venta' | 'tipo_movimiento' | 'estado_usuario'
   valor: number | null | undefined
   size?: 'sm' | 'md' | 'lg'
 }>()
@@ -31,6 +32,8 @@ const info = computed<ConceptoItem>(() => {
       return getBadgeMetodoVenta(props.valor)
     case 'tipo_movimiento':
       return getBadgeTipoMovimiento(props.valor)
+    case 'estado_usuario':
+      return getBadgeEstadoUsuario(props.valor)
     default:
       return {
         id: 0,
