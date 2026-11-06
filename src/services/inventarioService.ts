@@ -47,6 +47,8 @@ export interface InventarioLote {
   nombre_proveedor: string
   diasParaVencer?: number | null
   dias_para_vencer: number | null
+  marcaBaja?: boolean
+  marca_baja?: boolean
 }
 
 export interface ProductoCatalogo {
@@ -60,6 +62,8 @@ export interface ProductoCatalogo {
   nombre_producto: string
   categoriaId?: number
   categoria_id: number
+  categoriaNombre?: string
+  categoria_nombre?: string
   precioCompra?: number
   precio_compra: number
   precioVenta?: number
@@ -67,6 +71,8 @@ export interface ProductoCatalogo {
   estado: number
   stockTotalAcumulado?: number
   stock_total_acumulado: number
+  marcaBaja?: boolean
+  marca_baja?: boolean
 }
 
 export interface InventarioPendiente {
@@ -84,6 +90,8 @@ export interface InventarioPendiente {
   codigo_interno: string
   categoriaId?: number
   categoria_id: number
+  categoriaNombre?: string
+  categoria_nombre?: string
   precioCompra?: number
   precio_compra: number
   precioVenta?: number
@@ -93,6 +101,8 @@ export interface InventarioPendiente {
   estado: number // 1: Pendiente, 2: Aprobado, 3: Rechazado
   proveedorId?: number | null
   proveedor_id: number | null
+  nombreProveedor?: string | null
+  nombre_proveedor?: string | null
   descripcionLote?: string
   descripcion_lote: string
   precioLote?: number
@@ -101,16 +111,22 @@ export interface InventarioPendiente {
   fecha_vencimiento: string | null
   observacionRevision?: string | null
   observacion_revision?: string | null
+  fechaSubsanacion?: string | null
+  fecha_subsanacion?: string | null
   marcaBaja?: boolean
   marca_baja: boolean
   fechaCreacion?: string
   fecha_creacion: string
   usuarioCreacion?: number
   usuario_creacion: number
+  nombreUsuarioCreacion?: string | null
+  nombre_usuario_creacion?: string | null
   fechaRevision?: string | null
   fecha_revision?: string | null
   usuarioRevision?: number | null
   usuario_revision?: number | null
+  nombreUsuarioRevision?: string | null
+  nombre_usuario_revision?: string | null
 }
 
 export interface RegistroPendienteRequest {
@@ -127,6 +143,8 @@ export interface RegistroPendienteRequest {
   descripcionLote?: string
   precioLote?: number
   fechaVencimiento?: string | null
+  observacionRevision?: string | null
+  fechaSubsanacion?: string | null
   usuarioCreacion?: number
   usuarioRevision?: number
 }
@@ -188,11 +206,19 @@ export interface CategoriaDTO {
   nombreCategoria?: string
   nombre_categoria?: string
   descripcion?: string
+  marcaBaja?: boolean
+  marca_baja?: boolean
 }
 
 export interface ActualizarDescuentoRequest {
   enDescuento: boolean
   precioDescuento?: number | null
+}
+
+export interface DescontarUnidadesRequest {
+  cantidad: number
+  motivo?: string
+  usuarioId?: number
 }
 
 export interface CodigoInternoResponse {
@@ -219,8 +245,10 @@ export const inventarioService = {
    * GET /lotes
    * Listado de inventario activo por lotes (con cálculo de caducidad y datos de producto/proveedor)
    */
-  async listarLotes(): Promise<InventarioLote[]> {
-    const response = await api.get<InventarioLote[]>('/lotes')
+  async listarLotes(estadoRegistro: string = 'ACTIVOS'): Promise<InventarioLote[]> {
+    const response = await api.get<InventarioLote[]>('/lotes', {
+      params: { estadoRegistro }
+    })
     return response.data
   },
 
@@ -228,8 +256,10 @@ export const inventarioService = {
    * GET /catalogo
    * Maestro de productos registrados con su stock acumulado
    */
-  async listarCatalogo(): Promise<ProductoCatalogo[]> {
-    const response = await api.get<ProductoCatalogo[]>('/catalogo')
+  async listarCatalogo(estadoRegistro: string = 'ACTIVOS'): Promise<ProductoCatalogo[]> {
+    const response = await api.get<ProductoCatalogo[]>('/catalogo', {
+      params: { estadoRegistro }
+    })
     return response.data
   },
 
@@ -344,7 +374,7 @@ export const inventarioService = {
   async buscarProductoPorCodigo(codigo: string): Promise<ProductoDTO | null> {
     try {
       const response = await api.get<ProductoDTO>('/productos/buscar', {
-        params: { codigo },
+        params: { codigoBarras: codigo, codigo },
       })
       return response.data
     } catch (error: any) {
@@ -364,6 +394,21 @@ export const inventarioService = {
     datos: ActualizarDescuentoRequest
   ): Promise<{ mensaje: string }> {
     const response = await api.patch<{ mensaje: string }>(`/lotes/${inventarioId}/descuento`, datos)
+    return response.data
+  },
+
+  /**
+   * PUT /{id}/descontar-unidades
+   * Resta unidades específicas del stock disponible de un lote (rotura, pérdida, merma)
+   */
+  async descontarUnidades(
+    inventarioId: number,
+    datos: DescontarUnidadesRequest
+  ): Promise<{ mensaje: string; inventarioId: number; cantidadDescontada: number }> {
+    const response = await api.put<{ mensaje: string; inventarioId: number; cantidadDescontada: number }>(
+      `/${inventarioId}/descontar-unidades`,
+      datos
+    )
     return response.data
   },
 
@@ -401,6 +446,38 @@ export const inventarioService = {
   },
 
   /**
+   * PUT /productos/{productoId}/reactivar
+   * Reactiva un producto maestro que estaba dado de baja
+   */
+  async reactivarProducto(
+    productoId: number,
+    usuarioModificacion: number = 1
+  ): Promise<{ mensaje: string; productoId: number }> {
+    const response = await api.put<{ mensaje: string; productoId: number }>(
+      `/productos/${productoId}/reactivar`,
+      null,
+      { params: { usuarioModificacion } }
+    )
+    return response.data
+  },
+
+  /**
+   * PUT /lotes/{inventarioId}/reactivar
+   * Reactiva un lote de inventario que estaba dado de baja
+   */
+  async reactivarLote(
+    inventarioId: number,
+    usuarioModificacion: number = 1
+  ): Promise<{ mensaje: string; inventarioId: number }> {
+    const response = await api.put<{ mensaje: string; inventarioId: number }>(
+      `/lotes/${inventarioId}/reactivar`,
+      null,
+      { params: { usuarioModificacion } }
+    )
+    return response.data
+  },
+
+  /**
    * GET /proveedores
    * Listado de proveedores registrados activos
    */
@@ -415,6 +492,48 @@ export const inventarioService = {
    */
   async listarCategorias(): Promise<CategoriaDTO[]> {
     const response = await api.get<CategoriaDTO[]>('/categorias')
+    return response.data
+  },
+
+  /**
+   * POST /categorias
+   * Registra una nueva categoría en la tabla paramétrica conceptos (grupo_id = 2)
+   * y retorna la lista actualizada de categorías activas.
+   */
+  async crearCategoria(nombre: string, usuarioCreacion: number = 1): Promise<CategoriaDTO[]> {
+    const response = await api.post<CategoriaDTO[]>('/categorias', {
+      nombre,
+      usuarioCreacion,
+    })
+    return response.data
+  },
+
+  /**
+   * GET /categorias/gestion
+   * Listado completo de categorías para gestión administrativa (activas y dadas de baja)
+   */
+  async listarTodasCategorias(): Promise<CategoriaDTO[]> {
+    const response = await api.get<CategoriaDTO[]>('/categorias/gestion')
+    return response.data
+  },
+
+  /**
+   * PUT /categorias/{codigo}
+   * Modifica el nombre de una categoría en conceptos grupo 2
+   */
+  async actualizarCategoria(codigo: number, nombre: string): Promise<CategoriaDTO> {
+    const response = await api.put<CategoriaDTO>(`/categorias/${codigo}`, { nombre })
+    return response.data
+  },
+
+  /**
+   * PATCH /categorias/{codigo}/estado?baja={baja}
+   * Activa o da de baja lógica a una categoría
+   */
+  async cambiarEstadoCategoria(codigo: number, baja: boolean): Promise<CategoriaDTO> {
+    const response = await api.patch<CategoriaDTO>(`/categorias/${codigo}/estado`, null, {
+      params: { baja }
+    })
     return response.data
   },
 

@@ -123,11 +123,11 @@ export const proveedorService = {
   },
 
   /**
-   * GET /api/proveedores?busqueda={texto}&producto={texto}
-   * Lista distribuidores con filtros combinados (empresa/contacto o producto abastecido)
+   * GET /api/proveedores?busqueda={texto}&producto={texto}&estado={estado}
+   * Lista distribuidores con filtros combinados (empresa/contacto o producto abastecido y estado)
    */
-  async listarProveedores(busqueda?: string, producto?: string): Promise<ProveedorListado[]> {
-    const params: Record<string, string> = {}
+  async listarProveedores(busqueda?: string, producto?: string, estado: string = 'ACTIVOS'): Promise<ProveedorListado[]> {
+    const params: Record<string, string> = { estado }
     if (busqueda && busqueda.trim()) params.busqueda = busqueda.trim()
     if (producto && producto.trim()) params.producto = producto.trim()
 
@@ -167,6 +167,17 @@ export const proveedorService = {
    */
   async eliminarProveedor(id: number): Promise<{ mensaje: string }> {
     const response = await apiProveedores.delete<{ mensaje: string }>(`/${id}`)
+    return response.data
+  },
+
+  /**
+   * PUT /api/proveedores/{id}/reactivar
+   * Reactiva un distribuidor dado de baja
+   */
+  async reactivarProveedor(id: number, usuarioModificacion: number = 1): Promise<{ mensaje: string }> {
+    const response = await apiProveedores.put<{ mensaje: string }>(`/${id}/reactivar`, null, {
+      params: { usuarioModificacion }
+    })
     return response.data
   },
 
