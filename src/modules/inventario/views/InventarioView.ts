@@ -321,8 +321,7 @@ export const opcionesProveedores = computed(() => {
 })
 
 export const opcionesProductosCatalogo = computed(() => {
-  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
-  return fuente
+  return catalogoActivo.value
     .filter((p) => p.marca_baja !== true && (p as any).marcaBaja !== true)
     .map((p) => {
       const nombre = p.nombre_producto || p.nombreProducto || ''
@@ -1223,7 +1222,7 @@ export const formEditarPendiente = reactive({
   codigo_barras: '',
   codigo_interno: '',
   categoria_id: 1,
-  proveedor_id: 1,
+  proveedor_id: null as number | null,
   stock_ingresado: 0,
   precio_compra: 0,
   precio_venta: 0,
@@ -1243,9 +1242,7 @@ export async function abrirModalEditarPendiente(pendiente: InventarioPendiente) 
     agregarToast('Acceso Restringido', 'Solo Supervisores o Propietarios pueden rectificar registros en Sala de Espera.', 'warning')
     return
   }
-  if (catalogoActivo.value.length === 0 || proveedores.value.length === 0) {
-    await asegurarDatosActivosModal()
-  }
+  await asegurarDatosActivosModal()
   pendienteEnEdicion.value = pendiente
   const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
   const prodMatch = fuente.find(p => (p.producto_id || p.productoId) === (pendiente.producto_id || pendiente.productoId))
@@ -1261,7 +1258,12 @@ export async function abrirModalEditarPendiente(pendiente: InventarioPendiente) 
   formEditarPendiente.codigo_barras = pendiente.codigo_barras || pendiente.codigoBarras || ''
   formEditarPendiente.codigo_interno = pendiente.codigo_interno || pendiente.codigoInterno || ''
   formEditarPendiente.categoria_id = pendiente.categoria_id || pendiente.categoriaId || 1
-  formEditarPendiente.proveedor_id = pendiente.proveedor_id || pendiente.proveedorId || (proveedores.value[0]?.proveedor_id ?? 1)
+
+  // Preselección de distribuidor: el del registro pendiente, o el primer proveedor activo válido, o null ("Sin proveedor / Compra directa")
+  const primerProv = proveedores.value.find((p) => !p.marca_baja)
+  const fallbackProvId = primerProv ? (primerProv.proveedor_id ?? (primerProv as any).proveedorId) : null
+  formEditarPendiente.proveedor_id = pendiente.proveedor_id || pendiente.proveedorId || fallbackProvId
+
   formEditarPendiente.stock_ingresado = Number(pendiente.stock_ingresado ?? pendiente.stockIngresado ?? 0)
   formEditarPendiente.precio_compra = Number(pendiente.precio_compra ?? pendiente.precioCompra ?? 0)
   formEditarPendiente.precio_venta = Number(pendiente.precio_venta ?? pendiente.precioVenta ?? 0)
@@ -1626,6 +1628,8 @@ export async function asegurarDatosActivosModal() {
 }
 
 export async function abrirModalRecepcion() {
+  await asegurarDatosActivosModal()
+
   ultimoCodigoBuscado = ''
   buscandoCodigo = false
   formRecepcion.codigo_barras = ''
@@ -1645,14 +1649,9 @@ export async function abrirModalRecepcion() {
   modoProductoNuevoRecepcion.value = false
   productoSeleccionadoRecepcionId.value = null
 
-  // Asegurar que catálogo activo, proveedores y categorías estén listos
-  if (catalogoActivo.value.length === 0 || proveedores.value.length === 0 || listaCategorias.value.length === 0) {
-    await asegurarDatosActivosModal()
-  }
-
-  // Preseleccionar distribuidor por defecto válido
+  // Preseleccionar distribuidor por defecto válido: si hay proveedores activos, preselecciona el primero válido; de lo contrario, asigna null ("Sin proveedor / Compra directa")
   const primerProv = proveedores.value.find((p) => !p.marca_baja)
-  formRecepcion.proveedor_id = primerProv ? primerProv.proveedor_id : null
+  formRecepcion.proveedor_id = primerProv ? (primerProv.proveedor_id ?? (primerProv as any).proveedorId) : null
 
   // Preseleccionar primera categoría válida
   if (listaCategorias.value.length > 0 && listaCategorias.value[0]?.codigo) {
@@ -2108,8 +2107,8 @@ export async function guardarProveedorRapido() {
 
     const nuevoId = res.proveedorId
 
-    // Actualizar lista completa de proveedores desde GET /api/proveedores
-    const listaActualizada = await proveedorService.listarProveedores()
+    // Actualizar lista completa de proveedores desde GET /api/proveedores (forzando siempre ACTIVOS)
+    const listaActualizada = await proveedorService.listarProveedores('', '', 'ACTIVOS')
     proveedores.value = listaActualizada.map((p: any) => ({
       proveedor_id: p.proveedorId ?? p.proveedor_id,
       nombre_empresa: p.nombreEmpresa ?? p.nombre_empresa,

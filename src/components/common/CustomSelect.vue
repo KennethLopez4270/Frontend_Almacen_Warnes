@@ -42,6 +42,11 @@ const selectedOption = computed(() => {
   return props.options.find((opt) => opt.value === props.modelValue)
 })
 
+const displayActionLabel = computed(() => {
+  if (!props.actionLabel) return ''
+  return props.actionLabel.replace(/^(\s*\+\s*)+/, '')
+})
+
 const filteredOptions = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
   if (!query) return props.options
@@ -183,8 +188,8 @@ onUnmounted(() => {
 
           <!-- ESTADO VACÍO -->
           <li v-if="filteredOptions.length === 0" class="select-empty-state">
-            <template v-if="searchQuery && searchQuery.trim()">
-              No se encontraron resultados para "{{ searchQuery }}"
+            <template v-if="options.length > 0 && searchQuery && searchQuery.trim()">
+              No se encontraron resultados para "{{ searchQuery.trim() }}"
             </template>
             <template v-else>
               No hay opciones disponibles en la base de datos
@@ -193,13 +198,13 @@ onUnmounted(() => {
         </ul>
 
         <!-- BOTÓN FOOTER ACCIÓN (ATAJO RÁPIDO PARA CREAR) -->
-        <div v-if="showAction && actionLabel" class="select-action-footer">
+        <div v-if="showAction && displayActionLabel" class="select-action-footer">
           <button type="button" class="select-btn-action" @click.stop="triggerAction">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="action-icon-plus">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>{{ actionLabel }}</span>
+            <span>{{ displayActionLabel }}</span>
           </button>
         </div>
       </div>
