@@ -14,12 +14,12 @@ const routes = [
   {
     path: '/inventario',
     name: 'Inventario',
-    component: () => import('../views/InventarioView.vue'),
+    component: () => import('../modules/inventario/views/InventarioView.vue'),
   },
   {
     path: '/inventario/proveedores',
     name: 'Proveedores',
-    component: () => import('../views/ProveedoresView.vue'),
+    component: () => import('../modules/proveedores/views/ProveedoresView.vue'),
   },
   {
     path: '/inventario/kardex',

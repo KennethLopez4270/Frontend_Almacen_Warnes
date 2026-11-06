@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
+import { useUsuarioActivo } from '@/composables/useUsuarioActivo'
 import {
   proveedorService,
   type ProveedorKpi,
@@ -10,6 +11,8 @@ import {
   type CrearProveedorRequest,
   type ActualizarProveedorRequest,
 } from '@/services/proveedorService'
+
+const { usuarioActivoId, cargarUsuarios } = useUsuarioActivo()
 
 // ====================================================================
 // 1. ESTADO REACTIVO PRINCIPAL
@@ -27,6 +30,7 @@ const kpis = ref<ProveedorKpi>({
 const listaProveedores = ref<ProveedorListado[]>([])
 const filtroBusqueda = ref('')
 const filtroProducto = ref('')
+const filtroEstado = ref<'ACTIVOS' | 'INACTIVOS' | 'TODOS'>('ACTIVOS')
 
 // ====================================================================
 // 2. GESTIÓN DE NOTIFICACIONES TOAST
@@ -79,7 +83,8 @@ async function cargarProveedores() {
   try {
     listaProveedores.value = await proveedorService.listarProveedores(
       filtroBusqueda.value,
-      filtroProducto.value
+      filtroProducto.value,
+      filtroEstado.value
     )
   } catch (err: any) {
     agregarToast('Error al cargar proveedores', extraerError(err), 'danger')
@@ -95,6 +100,7 @@ async function aplicarFiltros() {
 function limpiarFiltros() {
   filtroBusqueda.value = ''
   filtroProducto.value = ''
+  filtroEstado.value = 'ACTIVOS'
   cargarProveedores()
 }
 
@@ -165,6 +171,7 @@ async function guardarProveedor() {
         nombreContacto: formProveedor.value.nombreContacto.trim(),
         numeroContacto: formProveedor.value.numeroContacto.trim(),
         anotaciones: formProveedor.value.anotaciones.trim(),
+        usuarioModificacion: usuarioActivoId.value,
       }
       const res = await proveedorService.actualizarProveedor(proveedorIdEdicion.value, payload)
       agregarToast('Éxito', res.mensaje || 'Distribuidor actualizado correctamente.', 'success')
@@ -174,6 +181,7 @@ async function guardarProveedor() {
         nombreContacto: formProveedor.value.nombreContacto.trim(),
         numeroContacto: formProveedor.value.numeroContacto.trim(),
         anotaciones: formProveedor.value.anotaciones.trim(),
+        usuarioCreacion: usuarioActivoId.value,
       }
       const res = await proveedorService.registrarProveedor(payload)
       agregarToast('Éxito', res.mensaje || 'Distribuidor registrado correctamente.', 'success')
@@ -219,6 +227,37 @@ async function ejecutarBaja() {
     agregarToast('Error al dar de baja', extraerError(err), 'danger')
   } finally {
     eliminando.value = false
+  }
+}
+
+// Modal de confirmación de reactivación
+const modalReactivarVisible = ref(false)
+const proveedorParaReactivar = ref<ProveedorListado | null>(null)
+const reactivando = ref(false)
+
+function abrirModalReactivar(p: ProveedorListado) {
+  proveedorParaReactivar.value = p
+  modalReactivarVisible.value = true
+}
+
+function cerrarModalReactivar() {
+  modalReactivarVisible.value = false
+  proveedorParaReactivar.value = null
+  reactivando.value = false
+}
+
+async function ejecutarReactivacion() {
+  if (!proveedorParaReactivar.value) return
+  reactivando.value = true
+  try {
+    const res = await proveedorService.reactivarProveedor(proveedorParaReactivar.value.proveedorId, usuarioActivoId.value)
+    agregarToast('Distribuidor Reactivado', res.mensaje || `"${proveedorParaReactivar.value.nombreEmpresa}" ha sido reactivado exitosamente.`, 'success')
+    cerrarModalReactivar()
+    await Promise.all([cargarKpis(), cargarProveedores()])
+  } catch (err: any) {
+    agregarToast('Error al reactivar distribuidor', extraerError(err), 'danger')
+  } finally {
+    reactivando.value = false
   }
 }
 
@@ -332,7 +371,7 @@ function getBadgeCaducidad(estado: string, dias: number | null) {
 }
 
 onMounted(async () => {
-  await Promise.all([cargarKpis(), cargarProveedores()])
+  await Promise.all([cargarKpis(), cargarProveedores(), cargarUsuarios()])
 })
 </script>
 
@@ -417,30 +456,14 @@ onMounted(async () => {
           </svg>
         </div>
       </div>
-
-      <!-- Card 4: Alertas de Vencimiento Próximo -->
-      <div class="prov-kpi-card" :class="{ 'prov-kpi-highlight-amber': kpis.proveedoresAlertasVencimiento > 0 }">
-        <div class="prov-kpi-info">
-          <span class="prov-kpi-label">Proveedores con Alerta (≤ 7 días)</span>
-          <span class="prov-kpi-value font-mono">{{ kpis.proveedoresAlertasVencimiento }}</span>
-          <span class="prov-kpi-sub">Lotes en riesgo inminente de caducidad</span>
-        </div>
-        <div class="prov-kpi-icon-box amber">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-        </div>
-      </div>
     </section>
 
     <!-- BARRA DE BÚSQUEDA DUAL Y FILTROS -->
     <div class="prov-toolbar-card">
       <div class="prov-filters-grid">
-        <!-- Buscador 1: Empresa / Contacto / Contrato -->
+        <!-- Buscador 1: Empresa / Contacto / Anotaciones -->
         <div class="prov-search-group">
-          <label class="prov-filter-label">Buscar por Empresa, Contacto o Contrato:</label>
+          <label class="prov-filter-label">Buscar por Empresa, Contacto o Anotaciones:</label>
           <div class="prov-input-with-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-input">
               <circle cx="11" cy="11" r="8" />
@@ -450,7 +473,7 @@ onMounted(async () => {
               v-model="filtroBusqueda"
               type="text"
               class="prov-input"
-              placeholder="Ej: PIL Andina, Roberto Gómez, CONTR-2026..."
+              placeholder="Ej: PIL Andina, Roberto Gómez, entregas..."
               @keyup.enter="aplicarFiltros"
             />
           </div>
@@ -473,6 +496,16 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- Selector de Estado: Activos / Dados de Baja / Todos -->
+        <div class="prov-search-group prov-group-status">
+          <label class="prov-filter-label">Estado de Registro:</label>
+          <select v-model="filtroEstado" class="prov-select" @change="aplicarFiltros">
+            <option value="ACTIVOS">Solo Activos</option>
+            <option value="INACTIVOS">Dados de Baja</option>
+            <option value="TODOS">Todos</option>
+          </select>
+        </div>
+
         <!-- Botones de Acción de Filtro -->
         <div class="prov-filter-actions">
           <button type="button" class="prov-btn-primary" @click="aplicarFiltros">
@@ -483,7 +516,7 @@ onMounted(async () => {
             <span>Filtrar</span>
           </button>
           <button
-            v-if="filtroBusqueda || filtroProducto"
+            v-if="filtroBusqueda || filtroProducto || filtroEstado !== 'ACTIVOS'"
             type="button"
             class="prov-btn-secondary"
             @click="limpiarFiltros"
@@ -507,7 +540,7 @@ onMounted(async () => {
             <tr>
               <th>Empresa / Distribuidor</th>
               <th>Contacto Logístico</th>
-              <th>Contrato Vigente / Términos</th>
+              <th>Anotaciones</th>
               <th class="text-center">Productos</th>
               <th class="text-center">Lotes / Stock</th>
               <th class="text-center">Estado</th>
@@ -535,7 +568,7 @@ onMounted(async () => {
               </td>
             </tr>
 
-            <tr v-for="prov in listaProveedores" :key="prov.proveedorId">
+            <tr v-for="prov in listaProveedores" :key="prov.proveedorId" :class="{ 'prov-row-baja': prov.marcaBaja }">
               <!-- Empresa -->
               <td>
                 <div class="prov-name-cell">
@@ -588,51 +621,69 @@ onMounted(async () => {
                   Activo
                 </span>
                 <span v-else class="prov-badge-inactive">
-                  Inactivo
+                  Dado de Baja
                 </span>
               </td>
 
               <!-- Acciones -->
               <td class="text-right">
                 <div class="prov-actions-cell">
-                  <!-- Botón: Ficha Logística / Auditoría -->
-                  <button
-                    type="button"
-                    class="prov-btn-action view"
-                    title="Auditar Ficha Logística y Lotes"
-                    @click="abrirFichaLogistica(prov)"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </button>
+                  <!-- Si el distribuidor está dado de baja (marcaBaja === true): ÚNICO botón de Restaurar -->
+                  <template v-if="prov.marcaBaja">
+                    <button
+                      type="button"
+                      class="prov-btn-action restore"
+                      title="Reactivar / Restaurar distribuidor"
+                      @click="abrirModalReactivar(prov)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                    </button>
+                  </template>
 
-                  <!-- Botón: Editar -->
-                  <button
-                    type="button"
-                    class="prov-btn-action edit"
-                    title="Editar datos del distribuidor"
-                    @click="abrirModalEditar(prov)"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
+                  <!-- Si está activo (marcaBaja === false): botones normales -->
+                  <template v-else>
+                    <!-- Botón: Ficha Logística / Auditoría -->
+                    <button
+                      type="button"
+                      class="prov-btn-action view"
+                      title="Auditar Ficha Logística y Lotes"
+                      @click="abrirFichaLogistica(prov)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
 
-                  <!-- Botón: Dar de Baja -->
-                  <button
-                    type="button"
-                    class="prov-btn-action delete"
-                    title="Dar de baja distribuidor"
-                    @click="confirmarBaja(prov)"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                  </button>
+                    <!-- Botón: Editar -->
+                    <button
+                      type="button"
+                      class="prov-btn-action edit"
+                      title="Editar datos del distribuidor"
+                      @click="abrirModalEditar(prov)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+
+                    <!-- Botón: Dar de Baja -->
+                    <button
+                      type="button"
+                      class="prov-btn-action delete"
+                      title="Dar de baja distribuidor"
+                      @click="confirmarBaja(prov)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </template>
                 </div>
               </td>
             </tr>
@@ -717,10 +768,10 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Campo 4: Contrato Vigente / Términos de Entrega -->
+          <!-- Campo 4: Anotaciones del Proveedor (VARCHAR 200 en BD) -->
           <div class="prov-form-group">
             <div class="prov-label-row">
-              <label class="prov-form-label">Contrato Vigente / Acuerdos Logísticos</label>
+              <label class="prov-form-label">Anotaciones del Proveedor</label>
               <span class="prov-char-counter">{{ formProveedor.anotaciones.length }}/200</span>
             </div>
             <textarea
@@ -728,7 +779,7 @@ onMounted(async () => {
               rows="3"
               maxlength="200"
               class="prov-textarea"
-              placeholder="Ej: Contrato CONTR-PIL-2026: Entregas martes y viernes 08:00 AM. Crédito quincenal."
+              placeholder="Ej: Entregas martes y viernes 08:00 AM. Crédito a 15 días. Descuento por volumen..."
             ></textarea>
             <span class="prov-text-muted-xs">
               Mapeado a la columna física <code>proveedores.anotaciones (VARCHAR 200)</code>.
@@ -801,6 +852,57 @@ onMounted(async () => {
       </div>
     </div>
 
+    <!-- MODAL DE CONFIRMACIÓN DE REACTIVACIÓN -->
+    <div v-if="modalReactivarVisible" class="prov-modal-backdrop" @click.self="cerrarModalReactivar">
+      <div class="prov-modal-container sm">
+        <div class="prov-modal-header">
+          <div class="prov-modal-title-box success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            <div>
+              <h2 class="prov-modal-title">Reactivar Distribuidor</h2>
+              <p class="prov-modal-subtitle">Se revertirá la baja lógica (marca_baja = false)</p>
+            </div>
+          </div>
+          <button type="button" class="prov-modal-close" @click="cerrarModalReactivar" :disabled="reactivando">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="prov-modal-body">
+          <p class="prov-confirm-text">
+            ¿Está seguro que desea reactivar al distribuidor
+            <strong>"{{ proveedorParaReactivar?.nombreEmpresa }}"</strong>?
+          </p>
+          <div class="prov-alert-box-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span>
+              El distribuidor volverá a estar habilitado para la recepción de nuevos lotes, vinculación de productos
+              y acuerdos comerciales vigentes.
+            </span>
+          </div>
+
+          <div class="prov-modal-footer">
+            <button type="button" class="prov-btn-secondary" @click="cerrarModalReactivar" :disabled="reactivando">
+              Cancelar
+            </button>
+            <button type="button" class="prov-btn-primary" style="background-color: #059669;" :disabled="reactivando" @click="ejecutarReactivacion">
+              <span v-if="reactivando" class="prov-spinner-sm"></span>
+              <span>Confirmar Reactivación</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- DRAWER / MODAL DE AUDITORÍA: FICHA LOGÍSTICA COMPLETA -->
     <div v-if="modalFichaVisible" class="prov-modal-backdrop" @click.self="modalFichaVisible = false">
       <div class="prov-modal-container xl">
@@ -839,8 +941,8 @@ onMounted(async () => {
               </svg>
             </div>
             <div>
-              <span class="prov-contract-label">Acuerdos y Condiciones Contractuales Vigentes:</span>
-              <p class="prov-contract-desc">{{ proveedorSeleccionado?.anotaciones || 'Sin anotaciones contractuales registradas.' }}</p>
+              <span class="prov-contract-label">Anotaciones del Proveedor:</span>
+              <p class="prov-contract-desc">{{ proveedorSeleccionado?.anotaciones || 'Sin anotaciones registradas.' }}</p>
             </div>
           </div>
 
@@ -1319,9 +1421,27 @@ onMounted(async () => {
 
 .prov-filters-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1.2fr 1.2fr 210px auto;
   gap: 1rem;
   align-items: flex-end;
+}
+
+.prov-select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  background-color: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.prov-select:focus {
+  border-color: #0284c7;
+  background-color: #ffffff;
 }
 
 .prov-search-group {
@@ -1589,6 +1709,27 @@ onMounted(async () => {
   border-color: #fecaca;
 }
 
+.prov-btn-action.restore {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.prov-btn-action.restore:hover {
+  background-color: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.prov-row-baja {
+  opacity: 0.62;
+  background-color: #f8fafc !important;
+}
+
+.prov-row-baja:hover td {
+  background-color: #f1f5f9 !important;
+}
+
 .prov-table-empty {
   text-align: center;
   padding: 3rem 1rem;
@@ -1654,6 +1795,10 @@ onMounted(async () => {
   color: #dc2626;
 }
 
+.prov-modal-title-box.success {
+  color: #059669;
+}
+
 .prov-modal-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -1696,6 +1841,15 @@ onMounted(async () => {
   gap: 0.75rem;
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
+}
+
+.prov-modal-container > .prov-modal-footer {
+  padding: 1.15rem 1.5rem 1.35rem 1.5rem;
+  margin-top: 0;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .prov-form-group {
@@ -1887,6 +2041,19 @@ onMounted(async () => {
   background-color: #fffbeb;
   border: 1px solid #fde68a;
   color: #92400e;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.prov-alert-box-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
   padding: 0.85rem;
   border-radius: 8px;
   font-size: 0.8rem;
