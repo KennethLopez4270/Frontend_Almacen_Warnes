@@ -183,7 +183,12 @@ onUnmounted(() => {
 
           <!-- ESTADO VACÍO -->
           <li v-if="filteredOptions.length === 0" class="select-empty-state">
-            No se encontraron resultados para "{{ searchQuery }}"
+            <template v-if="searchQuery && searchQuery.trim()">
+              No se encontraron resultados para "{{ searchQuery }}"
+            </template>
+            <template v-else>
+              No hay opciones disponibles en la base de datos
+            </template>
           </li>
         </ul>
 

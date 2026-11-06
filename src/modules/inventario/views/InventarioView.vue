@@ -8,7 +8,8 @@ import {
   modoProductoNuevoRecepcion, productoSeleccionadoRecepcionId, onSeleccionarProductoCatalogoRecepcion, alternarModoProductoRecepcion,
   modoProductoNuevoEdicion, productoSeleccionadoEdicionId, onSeleccionarProductoCatalogoEdicion, redirigirAProveedores, removerToast, resetFiltros, resolverInfoUsuario, router, searchQuery, selectedCategoria, selectedEstadoProducto, selectedProveedor, showNotificationsDrawer, simularEscaneo, toastCounter, toasts, totalAlertasVencimiento, totalEnSalaEspera, totalProductosCatalogo, totalStockActivo,
   selectedEstadoRegistro, onEstadoRegistroChange, reactivarItemInventario, darBajaProductoCatalogo, reactivarProductoCatalogo,
-  modalConfirmacion, cerrarModalConfirmacion, ejecutarAccionConfirmacion
+  modalConfirmacion, cerrarModalConfirmacion, ejecutarAccionConfirmacion,
+  catalogoActivo, asegurarDatosActivosModal
 } from './InventarioView'
 
 onMounted(async () => {
@@ -1169,7 +1170,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                   :options="opcionesProductosCatalogo"
                   placeholder="Buscar y seleccionar producto de la base de datos..."
                   :show-action="true"
-                  action-label="+ ¿No está en la lista? Escribir producto nuevo"
+                  action-label="¿No está en la lista? Escribir producto nuevo"
                   @action="alternarModoProductoRecepcion(true)"
                   @update:model-value="onSeleccionarProductoCatalogoRecepcion"
                 />
@@ -1218,7 +1219,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                     placeholder="Seleccione categoría..."
                     icon-type="categoria"
                     :show-action="puedeCrearCategoria"
-                    action-label="+ Registrar nueva categoría"
+                    action-label="Registrar nueva categoría"
                     @action="abrirModalCrearCategoria"
                   />
                   <button
@@ -1245,7 +1246,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                     placeholder="Seleccione distribuidor..."
                     icon-type="proveedor"
                     :show-action="puedeCrearProveedor"
-                    action-label="+ Registrar nuevo distribuidor"
+                    action-label="Registrar nuevo distribuidor"
                     @action="abrirModalCrearProveedor"
                   />
                   <button
@@ -1725,7 +1726,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                   placeholder="Seleccione categoría..."
                   icon-type="categoria"
                   :show-action="puedeCrearCategoria"
-                  action-label="+ Registrar nueva categoría"
+                  action-label="Registrar nueva categoría"
                   @action="abrirModalCrearCategoria"
                 />
                 <button
@@ -1752,7 +1753,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                   placeholder="Seleccione distribuidor..."
                   icon-type="proveedor"
                   :show-action="puedeCrearProveedor"
-                  action-label="+ Registrar nuevo distribuidor"
+                  action-label="Registrar nuevo distribuidor"
                   @action="abrirModalCrearProveedor"
                 />
                 <button

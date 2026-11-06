@@ -266,6 +266,7 @@ export const kpisBackend = ref<InventarioKpi | null>(null)
 export const lotesStock = ref<InventarioLote[]>([])
 export const inventarioPendientes = ref<InventarioPendiente[]>([])
 export const catalogoBackend = ref<ProductoCatalogo[]>([])
+export const catalogoActivo = ref<ProductoCatalogo[]>([])
 export const proveedores = ref<Proveedor[]>([])
 export const productos = ref<Producto[]>([])
 
@@ -306,29 +307,34 @@ export const opcionesProveedores = computed(() => {
       label: 'Sin proveedor / Compra directa'
     }
   ]
-  proveedores.value.forEach((p) => {
-    const contacto = [p.nombre_contacto, p.numero_contacto].filter(Boolean).join(' • ')
-    lista.push({
-      value: p.proveedor_id,
-      label: p.nombre_empresa,
-      subtitle: contacto || undefined
+  proveedores.value
+    .filter((p) => p.marca_baja !== true && (p as any).marcaBaja !== true)
+    .forEach((p) => {
+      const contacto = [p.nombre_contacto, p.numero_contacto].filter(Boolean).join(' • ')
+      lista.push({
+        value: p.proveedor_id,
+        label: p.nombre_empresa,
+        subtitle: contacto || undefined
+      })
     })
-  })
   return lista
 })
 
 export const opcionesProductosCatalogo = computed(() => {
-  return catalogoBackend.value.map((p) => {
-    const nombre = p.nombre_producto || p.nombreProducto || ''
-    const cod = p.codigo_interno || p.codigoInterno || ''
-    const cat = p.categoria_nombre || p.categoriaNombre || CATEGORIAS[p.categoria_id || p.categoriaId || 1] || ''
-    const detalles = [cod, cat].filter(Boolean).join(' • ')
-    return {
-      value: p.producto_id || p.productoId || 0,
-      label: nombre,
-      subtitle: detalles || undefined
-    }
-  })
+  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+  return fuente
+    .filter((p) => p.marca_baja !== true && (p as any).marcaBaja !== true)
+    .map((p) => {
+      const nombre = p.nombre_producto || p.nombreProducto || ''
+      const cod = p.codigo_interno || p.codigoInterno || ''
+      const cat = p.categoria_nombre || p.categoriaNombre || CATEGORIAS[p.categoria_id || p.categoriaId || 1] || ''
+      const detalles = [cod, cat].filter(Boolean).join(' • ')
+      return {
+        value: p.producto_id || p.productoId || 0,
+        label: nombre,
+        subtitle: detalles || undefined
+      }
+    })
 })
 
 export const modoProductoNuevoRecepcion = ref(false)
@@ -340,7 +346,8 @@ export function onSeleccionarProductoCatalogoRecepcion(productoId: number | null
     formRecepcion.producto_id = null
     return
   }
-  const encontrado = catalogoBackend.value.find((p) => (p.producto_id || p.productoId) === productoId)
+  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+  const encontrado = fuente.find((p) => (p.producto_id || p.productoId) === productoId)
   if (encontrado) {
     formRecepcion.producto_id = encontrado.producto_id || encontrado.productoId || null
     formRecepcion.nombre_producto = encontrado.nombre_producto || encontrado.nombreProducto || ''
@@ -366,12 +373,13 @@ export function alternarModoProductoRecepcion(esNuevo: boolean) {
     formRecepcion.codigo_interno = ''
     autogenerarCodigoInterno('')
   } else {
-    if (catalogoBackend.value.length > 0) {
-      const actual = catalogoBackend.value.find(p => (p.nombre_producto || p.nombreProducto) === formRecepcion.nombre_producto)
+    const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+    if (fuente.length > 0) {
+      const actual = fuente.find(p => (p.nombre_producto || p.nombreProducto) === formRecepcion.nombre_producto)
       if (actual) {
         onSeleccionarProductoCatalogoRecepcion(actual.producto_id || actual.productoId || null)
       } else {
-        const primero = catalogoBackend.value[0]
+        const primero = fuente[0]
         if (primero) {
           onSeleccionarProductoCatalogoRecepcion(primero.producto_id || primero.productoId || null)
         }
@@ -389,7 +397,8 @@ export function onSeleccionarProductoCatalogoEdicion(productoId: number | null) 
     formEditarPendiente.producto_id = null
     return
   }
-  const encontrado = catalogoBackend.value.find((p) => (p.producto_id || p.productoId) === productoId)
+  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+  const encontrado = fuente.find((p) => (p.producto_id || p.productoId) === productoId)
   if (encontrado) {
     formEditarPendiente.producto_id = encontrado.producto_id || encontrado.productoId || null
     formEditarPendiente.nombre_producto = encontrado.nombre_producto || encontrado.nombreProducto || ''
@@ -721,7 +730,8 @@ export const filasStock = computed<StockFilaCombinada[]>(() => {
     .map((item) => {
       const fechaVenc = item.fecha_vencimiento || item.fechaVencimiento || null
       const diasVenc = item.dias_para_vencer ?? item.diasParaVencer ?? getDiasParaVencer(fechaVenc)
-      const producto = catalogoBackend.value.find((p) => (p.producto_id || p.productoId) === (item.producto_id || item.productoId))
+      const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+      const producto = fuente.find((p) => (p.producto_id || p.productoId) === (item.producto_id || item.productoId))
       const categoriaId = producto?.categoria_id || producto?.categoriaId || 1
 
       return {
@@ -1228,14 +1238,18 @@ export function onEditarCalculoPrecioLote() {
   formEditarPendiente.precio_lote = Number((stock * costo).toFixed(2))
 }
 
-export function abrirModalEditarPendiente(pendiente: InventarioPendiente) {
+export async function abrirModalEditarPendiente(pendiente: InventarioPendiente) {
   if (rolActivo.value === ROLES.CAJERO && pendiente.estado !== ESTADOS_SALA_ESPERA.OBSERVADO) {
     agregarToast('Acceso Restringido', 'Solo Supervisores o Propietarios pueden rectificar registros en Sala de Espera.', 'warning')
     return
   }
+  if (catalogoActivo.value.length === 0 || proveedores.value.length === 0) {
+    await asegurarDatosActivosModal()
+  }
   pendienteEnEdicion.value = pendiente
-  const prodMatch = catalogoBackend.value.find(p => (p.producto_id || p.productoId) === (pendiente.producto_id || pendiente.productoId))
-    || catalogoBackend.value.find(p => (p.nombre_producto || p.nombreProducto || '').toLowerCase() === (pendiente.nombre_producto || pendiente.nombreProducto || '').toLowerCase())
+  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
+  const prodMatch = fuente.find(p => (p.producto_id || p.productoId) === (pendiente.producto_id || pendiente.productoId))
+    || fuente.find(p => (p.nombre_producto || p.nombreProducto || '').toLowerCase() === (pendiente.nombre_producto || pendiente.nombreProducto || '').toLowerCase())
   if (prodMatch) {
     productoSeleccionadoEdicionId.value = prodMatch.producto_id || prodMatch.productoId || null
     modoProductoNuevoEdicion.value = false
@@ -1567,6 +1581,50 @@ export const formRecepcion = reactive({
   ingresar_directo_aprobado: false
 })
 
+export async function asegurarDatosActivosModal() {
+  try {
+    const promises: Promise<any>[] = []
+    if (catalogoActivo.value.length === 0) {
+      promises.push(
+        inventarioService.listarCatalogo('ACTIVOS').then((res) => {
+          catalogoActivo.value = res || []
+        }).catch((err) => console.error('Error al precargar catalogo activo para modal:', err))
+      )
+    }
+    if (proveedores.value.length === 0) {
+      promises.push(
+        proveedorService.listarProveedores('', '', 'ACTIVOS').then((res) => {
+          proveedores.value = (res || []).map((p: any) => ({
+            proveedor_id: p.proveedorId ?? p.proveedor_id ?? 1,
+            nombre_empresa: p.nombreEmpresa ?? p.nombre_empresa ?? '',
+            nombre_contacto: p.nombreContacto ?? p.nombre_contacto ?? '',
+            numero_contacto: p.numeroContacto ?? p.numero_contacto ?? '',
+            anotaciones: p.anotaciones ?? '',
+            marca_baja: Boolean(p.marcaBaja ?? p.marca_baja)
+          }))
+        }).catch((err) => console.error('Error al precargar proveedores para modal:', err))
+      )
+    }
+    if (listaCategorias.value.length === 0) {
+      promises.push(
+        inventarioService.listarCategorias().then((res) => {
+          listaCategorias.value = res || []
+          ;(res || []).forEach((c) => {
+            const id = c.codigo ?? c.categoria_id ?? c.categoriaId
+            const nombre = c.nombreCategoria ?? c.descripcion ?? c.nombre_categoria
+            if (id != null && nombre) CATEGORIAS[id] = nombre
+          })
+        }).catch((err) => console.error('Error al precargar categorias para modal:', err))
+      )
+    }
+    if (promises.length > 0) {
+      await Promise.all(promises)
+    }
+  } catch (err: any) {
+    console.error('Error en asegurarDatosActivosModal:', err)
+  }
+}
+
 export async function abrirModalRecepcion() {
   ultimoCodigoBuscado = ''
   buscandoCodigo = false
@@ -1575,7 +1633,6 @@ export async function abrirModalRecepcion() {
   formRecepcion.nombre_producto = ''
   formRecepcion.codigo_interno = ''
   formRecepcion.categoria_id = 1
-  formRecepcion.proveedor_id = proveedores.value.length ? (proveedores.value[0]?.proveedor_id ?? 1) : 1
   formRecepcion.descripcion_lote = ''
   formRecepcion.stock_ingresado = 50
   formRecepcion.precio_lote = 250
@@ -1587,6 +1644,21 @@ export async function abrirModalRecepcion() {
 
   modoProductoNuevoRecepcion.value = false
   productoSeleccionadoRecepcionId.value = null
+
+  // Asegurar que catálogo activo, proveedores y categorías estén listos
+  if (catalogoActivo.value.length === 0 || proveedores.value.length === 0 || listaCategorias.value.length === 0) {
+    await asegurarDatosActivosModal()
+  }
+
+  // Preseleccionar distribuidor por defecto válido
+  const primerProv = proveedores.value.find((p) => !p.marca_baja)
+  formRecepcion.proveedor_id = primerProv ? primerProv.proveedor_id : null
+
+  // Preseleccionar primera categoría válida
+  if (listaCategorias.value.length > 0 && listaCategorias.value[0]?.codigo) {
+    formRecepcion.categoria_id = listaCategorias.value[0].codigo!
+  }
+
   modalRecepcionVisible.value = true
 
   nextTick(() => {
@@ -1604,8 +1676,9 @@ export function autogenerarCodigoInterno(nombre: string): string {
   if (limpio.length === 0) return ''
   const prefijo = limpio.slice(0, 3).padEnd(3, 'X')
 
+  const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
   const existentes = [
-    ...catalogoBackend.value.map((p) => p.codigo_interno || p.codigoInterno || ''),
+    ...fuente.map((p) => p.codigo_interno || p.codigoInterno || ''),
     ...lotesStock.value.map((l) => l.codigo_interno || l.codigoInterno || ''),
     ...inventarioPendientes.value.map((p) => p.codigo_interno || p.codigoInterno || '')
   ].filter((c) => c.startsWith(prefijo))
@@ -2075,22 +2148,35 @@ export async function recargarTodo() {
   recargaEnProgreso = true
   cargando.value = true
   try {
-    const [kpiRes, lotesRes, pendientesRes, catalogoRes, provRes, catRes] = await Promise.allSettled([
+    const estado = selectedEstadoRegistro.value || 'ACTIVOS'
+
+    const peticionCatalogoFiltro = estado === 'ACTIVOS'
+      ? inventarioService.listarCatalogo('ACTIVOS')
+      : inventarioService.listarCatalogo(estado)
+
+    const [kpiRes, lotesRes, pendientesRes, catalogoFiltroRes, catalogoActivoRes, provRes, catRes] = await Promise.allSettled([
       inventarioService.obtenerKpis(),
-      inventarioService.listarLotes(selectedEstadoRegistro.value),
+      inventarioService.listarLotes(estado),
       inventarioService.listarPendientes(),
-      inventarioService.listarCatalogo(selectedEstadoRegistro.value),
-      proveedorService.listarProveedores('', '', selectedEstadoRegistro.value),
+      peticionCatalogoFiltro,
+      estado === 'ACTIVOS' ? Promise.resolve(null) : inventarioService.listarCatalogo('ACTIVOS'),
+      proveedorService.listarProveedores('', '', 'ACTIVOS'),
       inventarioService.listarCategorias()
     ])
 
-    if (kpiRes.status === 'fulfilled') {
+    if (kpiRes.status === 'fulfilled' && kpiRes.value) {
       kpisBackend.value = kpiRes.value
+    } else if (kpiRes.status === 'rejected') {
+      console.error('Error al obtener KPIs:', kpiRes.reason)
     }
-    if (lotesRes.status === 'fulfilled') {
+
+    if (lotesRes.status === 'fulfilled' && lotesRes.value) {
       lotesStock.value = lotesRes.value
+    } else if (lotesRes.status === 'rejected') {
+      console.error('Error al listar lotes:', lotesRes.reason)
     }
-    if (pendientesRes.status === 'fulfilled') {
+
+    if (pendientesRes.status === 'fulfilled' && pendientesRes.value) {
       const backendPendientes = pendientesRes.value.map(normalizarPendiente)
       const historial = obtenerHistorialAuditoria()
       const mapa = new Map<number, InventarioPendiente>()
@@ -2106,10 +2192,23 @@ export async function recargarTodo() {
       })
 
       inventarioPendientes.value = Array.from(mapa.values())
+    } else if (pendientesRes.status === 'rejected') {
+      console.error('Error al listar pendientes:', pendientesRes.reason)
     }
-    if (catalogoRes.status === 'fulfilled') {
-      catalogoBackend.value = catalogoRes.value
+
+    if (catalogoFiltroRes.status === 'fulfilled' && catalogoFiltroRes.value) {
+      catalogoBackend.value = catalogoFiltroRes.value
+      if (estado === 'ACTIVOS') {
+        catalogoActivo.value = catalogoFiltroRes.value
+      }
+    } else if (catalogoFiltroRes.status === 'rejected') {
+      console.error('Error al listar catálogo filtrado:', catalogoFiltroRes.reason)
     }
+
+    if (catalogoActivoRes.status === 'fulfilled' && catalogoActivoRes.value) {
+      catalogoActivo.value = catalogoActivoRes.value
+    }
+
     if (provRes.status === 'fulfilled' && provRes.value) {
       proveedores.value = provRes.value.map((p: any) => ({
         proveedor_id: p.proveedorId ?? p.proveedor_id ?? 1,
@@ -2119,7 +2218,10 @@ export async function recargarTodo() {
         anotaciones: p.anotaciones ?? '',
         marca_baja: Boolean(p.marcaBaja ?? p.marca_baja)
       }))
+    } else if (provRes.status === 'rejected') {
+      console.error('Error al listar proveedores:', provRes.reason)
     }
+
     if (catRes.status === 'fulfilled' && catRes.value) {
       listaCategorias.value = catRes.value
       // Limpiar y repoblar el mapa reactivo
@@ -2136,6 +2238,8 @@ export async function recargarTodo() {
       if (!formRecepcion.categoria_id && catRes.value.length && catRes.value[0]?.codigo) {
         formRecepcion.categoria_id = catRes.value[0].codigo!
       }
+    } else if (catRes.status === 'rejected') {
+      console.error('Error al listar categorías:', catRes.reason)
     }
   } catch (err: any) {
     agregarToast('Conexión con Backend', extraerMensajeError(err), 'warning')
