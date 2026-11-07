@@ -102,6 +102,40 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
+.inv-branch-selector-card {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.inv-branch-badge-card {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.inv-branch-fixed-badge {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #166534;
+  padding: 0.2rem 0.5rem;
+  background-color: #dcfce7;
+  border-radius: 4px;
+}
+
+.inv-badge-sucursal {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-top: 2px;
+  width: fit-content;
+}
+
 .inv-role-label {
   display: flex;
   align-items: center;

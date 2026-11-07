@@ -48,6 +48,9 @@ export interface ProveedorKpi {
 
 export interface ProveedorListado {
   proveedorId: number
+  sucursalId?: number
+  codigoSucursal?: string
+  ciudadSucursal?: string
   nombreEmpresa: string
   nombreContacto: string
   numeroContacto: string
@@ -98,6 +101,7 @@ export interface CrearProveedorRequest {
   numeroContacto: string
   anotaciones: string
   usuarioCreacion?: number
+  sucursalId?: number
 }
 
 export interface ActualizarProveedorRequest {
@@ -106,6 +110,7 @@ export interface ActualizarProveedorRequest {
   numeroContacto: string
   anotaciones: string
   usuarioModificacion?: number
+  sucursalId?: number
 }
 
 // ====================================================================
@@ -117,19 +122,27 @@ export const proveedorService = {
    * GET /api/proveedores/kpis
    * Retorna métricas cuantitativas clave de proveedores y abastecimiento
    */
-  async obtenerKpis(): Promise<ProveedorKpi> {
-    const response = await apiProveedores.get<ProveedorKpi>('/kpis')
+  async obtenerKpis(sucursalId?: number | null): Promise<ProveedorKpi> {
+    const params: Record<string, any> = {}
+    if (sucursalId != null) params.sucursalId = sucursalId
+    const response = await apiProveedores.get<ProveedorKpi>('/kpis', { params })
     return response.data
   },
 
   /**
-   * GET /api/proveedores?busqueda={texto}&producto={texto}&estado={estado}
-   * Lista distribuidores con filtros combinados (empresa/contacto o producto abastecido y estado)
+   * GET /api/proveedores?busqueda={texto}&producto={texto}&estado={estado}&sucursalId={id}
+   * Lista distribuidores con filtros combinados (empresa/contacto o producto abastecido, estado y sucursal)
    */
-  async listarProveedores(busqueda?: string, producto?: string, estado: string = 'ACTIVOS'): Promise<ProveedorListado[]> {
-    const params: Record<string, string> = { estado }
+  async listarProveedores(
+    busqueda?: string,
+    producto?: string,
+    estado: string = 'ACTIVOS',
+    sucursalId?: number | null
+  ): Promise<ProveedorListado[]> {
+    const params: Record<string, any> = { estado }
     if (busqueda && busqueda.trim()) params.busqueda = busqueda.trim()
     if (producto && producto.trim()) params.producto = producto.trim()
+    if (sucursalId != null) params.sucursalId = sucursalId
 
     const response = await apiProveedores.get<ProveedorListado[]>('', { params })
     return response.data

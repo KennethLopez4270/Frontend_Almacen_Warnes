@@ -4,6 +4,20 @@ import api from './api'
 // INTERFACES TIPADAS (MAPEO EXACTO A DTOS DE SPRING BOOT & POSTGRESQL)
 // ====================================================================
 
+export interface SucursalDTO {
+  sucursalId: number
+  sucursal_id?: number
+  codigoInterno?: string
+  codigo_interno?: string
+  codigo?: string
+  nombre?: string
+  ciudad?: string
+  direccion?: string
+  telefono?: string
+  marcaBaja: boolean
+  marca_baja?: boolean
+}
+
 export interface InventarioKpi {
   totalProductosCatalogo?: number
   unidadesStockActivo?: number
@@ -18,6 +32,12 @@ export interface InventarioKpi {
 export interface InventarioLote {
   inventarioId?: number
   inventario_id: number
+  sucursalId?: number
+  sucursal_id?: number
+  codigoSucursal?: string
+  codigo_sucursal?: string
+  ciudadSucursal?: string
+  ciudad_sucursal?: string
   stock: number
   enDescuento?: boolean
   en_descuento: boolean
@@ -80,6 +100,10 @@ export interface InventarioPendiente {
   inventario_pendiente_id: number
   sucursalId?: number
   sucursal_id: number
+  codigoSucursal?: string
+  codigo_sucursal?: string
+  ciudadSucursal?: string
+  ciudad_sucursal?: string
   productoId?: number | null
   producto_id: number | null
   nombreProducto?: string
@@ -121,6 +145,8 @@ export interface InventarioPendiente {
   usuario_creacion: number
   nombreUsuarioCreacion?: string | null
   nombre_usuario_creacion?: string | null
+  rolUsuarioCreacion?: string | null
+  rol_usuario_creacion?: string | null
   fechaRevision?: string | null
   fecha_revision?: string | null
   usuarioRevision?: number | null
@@ -150,6 +176,8 @@ export interface RegistroPendienteRequest {
 }
 
 export interface IngresoDirectoRequest {
+  sucursalId?: number
+  sucursal_id?: number
   categoriaId: number
   nombreProducto: string
   codigoInterno: string
@@ -188,6 +216,8 @@ export interface ProductoDTO {
 export interface ProveedorDTO {
   proveedorId?: number
   proveedor_id?: number
+  sucursalId?: number
+  sucursal_id?: number
   nombreEmpresa?: string
   nombre_empresa?: string
   nombreContacto?: string
@@ -235,40 +265,66 @@ export const inventarioService = {
    * GET /kpis
    * Obtiene las métricas en tiempo real:
    * total_productos_catalogo, unidades_stock_activo, lotes_sala_espera, alertas_vencimiento
+   * Filtrable por sucursal
    */
-  async obtenerKpis(): Promise<InventarioKpi> {
-    const response = await api.get<InventarioKpi>('/kpis')
+  async obtenerKpis(sucursalId?: number | null): Promise<InventarioKpi> {
+    const params: any = {}
+    if (sucursalId != null) {
+      params.sucursalId = sucursalId
+    }
+    const response = await api.get<InventarioKpi>('/kpis', { params })
+    return response.data
+  },
+
+  /**
+   * GET /sucursales
+   * Obtiene la lista de sucursales activas registradas en el sistema
+   */
+  async listarSucursales(): Promise<SucursalDTO[]> {
+    const response = await api.get<SucursalDTO[]>('/sucursales')
     return response.data
   },
 
   /**
    * GET /lotes
-   * Listado de inventario activo por lotes (con cálculo de caducidad y datos de producto/proveedor)
+   * Listado de inventario activo por lotes (con cálculo de caducidad, datos de producto/proveedor y sucursal)
    */
-  async listarLotes(estadoRegistro: string = 'ACTIVOS'): Promise<InventarioLote[]> {
+  async listarLotes(estadoRegistro: string = 'ACTIVOS', sucursalId?: number | null): Promise<InventarioLote[]> {
+    const params: any = { estadoRegistro }
+    if (sucursalId != null) {
+      params.sucursalId = sucursalId
+    }
     const response = await api.get<InventarioLote[]>('/lotes', {
-      params: { estadoRegistro }
+      params
     })
     return response.data
   },
 
   /**
    * GET /catalogo
-   * Maestro de productos registrados con su stock acumulado
+   * Maestro de productos registrados con su stock acumulado (filtrable por sucursal)
    */
-  async listarCatalogo(estadoRegistro: string = 'ACTIVOS'): Promise<ProductoCatalogo[]> {
+  async listarCatalogo(estadoRegistro: string = 'ACTIVOS', sucursalId?: number | null): Promise<ProductoCatalogo[]> {
+    const params: any = { estadoRegistro }
+    if (sucursalId != null) {
+      params.sucursalId = sucursalId
+    }
     const response = await api.get<ProductoCatalogo[]>('/catalogo', {
-      params: { estadoRegistro }
+      params
     })
     return response.data
   },
 
   /**
    * GET /pendientes
-   * Listado de la sala de espera (registros con estado = 1 pendientes de aprobación)
+   * Listado de la sala de espera (registros con estado = 1 pendientes de aprobación filtrables por sucursal)
    */
-  async listarPendientes(): Promise<InventarioPendiente[]> {
-    const response = await api.get<InventarioPendiente[]>('/pendientes')
+  async listarPendientes(sucursalId?: number | null): Promise<InventarioPendiente[]> {
+    const params: any = {}
+    if (sucursalId != null) {
+      params.sucursalId = sucursalId
+    }
+    const response = await api.get<InventarioPendiente[]>('/pendientes', { params })
     return response.data
   },
 
@@ -481,8 +537,10 @@ export const inventarioService = {
    * GET /proveedores
    * Listado de proveedores registrados activos
    */
-  async listarProveedores(): Promise<ProveedorDTO[]> {
-    const response = await api.get<ProveedorDTO[]>('/proveedores')
+  async listarProveedores(sucursalId?: number | null): Promise<ProveedorDTO[]> {
+    const params: Record<string, any> = {}
+    if (sucursalId != null) params.sucursalId = sucursalId
+    const response = await api.get<ProveedorDTO[]>('/proveedores', { params })
     return response.data
   },
 

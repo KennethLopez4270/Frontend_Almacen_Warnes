@@ -12,6 +12,8 @@ const apiUsuarios = axios.create({
 export interface UsuarioDTO {
   usuarioId: number
   usuario_id?: number
+  sucursalId?: number | null
+  sucursal_id?: number | null
   usuario: string
   nombres: string
   apellidos: string
@@ -27,13 +29,23 @@ export interface UsuarioDTO {
 
 export const usuarioService = {
   async listarUsuarios(): Promise<UsuarioDTO[]> {
-    const response = await apiUsuarios.get<UsuarioDTO[]>('/usuarios')
-    return response.data
+    try {
+      const response = await apiUsuarios.get<UsuarioDTO[]>('/seguridad/usuarios')
+      return response.data
+    } catch {
+      const response = await apiUsuarios.get<UsuarioDTO[]>('/usuarios')
+      return response.data
+    }
   },
 
   async obtenerUsuarioPorId(id: number): Promise<UsuarioDTO> {
-    const response = await apiUsuarios.get<UsuarioDTO>(`/usuarios/${id}`)
-    return response.data
+    try {
+      const response = await apiUsuarios.get<UsuarioDTO>(`/seguridad/usuarios/${id}`)
+      return response.data
+    } catch {
+      const response = await apiUsuarios.get<UsuarioDTO>(`/usuarios/${id}`)
+      return response.data
+    }
   },
 }
 

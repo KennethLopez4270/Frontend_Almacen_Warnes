@@ -22,7 +22,8 @@ import {
   type IngresoDirectoRequest,
   type DescontarUnidadesRequest,
   type ProveedorDTO,
-  type CategoriaDTO
+  type CategoriaDTO,
+  type SucursalDTO
 } from '@/services/inventarioService'
 import { proveedorService } from '@/services/proveedorService'
 import { useUsuarioActivo } from '@/composables/useUsuarioActivo'
@@ -103,6 +104,10 @@ export interface InventarioPendiente {
   inventarioPendienteId?: number
   sucursal_id: number
   sucursalId?: number
+  codigo_sucursal?: string
+  codigoSucursal?: string
+  ciudad_sucursal?: string
+  ciudadSucursal?: string
   producto_id: number | null
   productoId?: number | null
   nombre_producto: string
@@ -140,6 +145,8 @@ export interface InventarioPendiente {
   usuarioCreacion?: number
   nombre_usuario_creacion?: string | null
   nombreUsuarioCreacion?: string | null
+  rol_usuario_creacion?: string | null
+  rolUsuarioCreacion?: string | null
   fecha_revision: string | null
   fechaRevision?: string | null
   usuario_revision: number | null
@@ -209,6 +216,10 @@ export function normalizarPendiente(p: any): InventarioPendiente {
     inventarioPendienteId: p.inventarioPendienteId || p.inventario_pendiente_id || 0,
     sucursal_id: p.sucursal_id || p.sucursalId || 1,
     sucursalId: p.sucursalId || p.sucursal_id || 1,
+    codigo_sucursal: p.codigo_sucursal || p.codigoSucursal || '',
+    codigoSucursal: p.codigoSucursal || p.codigo_sucursal || '',
+    ciudad_sucursal: p.ciudad_sucursal || p.ciudadSucursal || '',
+    ciudadSucursal: p.ciudadSucursal || p.ciudad_sucursal || '',
     producto_id: p.producto_id !== undefined ? p.producto_id : (p.productoId !== undefined ? p.productoId : null),
     productoId: p.productoId !== undefined ? p.productoId : (p.producto_id !== undefined ? p.producto_id : null),
     nombre_producto: p.nombre_producto || p.nombreProducto || '',
@@ -246,6 +257,8 @@ export function normalizarPendiente(p: any): InventarioPendiente {
     usuarioCreacion: p.usuarioCreacion ?? p.usuario_creacion ?? 1,
     nombre_usuario_creacion: p.nombre_usuario_creacion || p.nombreUsuarioCreacion || null,
     nombreUsuarioCreacion: p.nombreUsuarioCreacion || p.nombre_usuario_creacion || null,
+    rol_usuario_creacion: p.rol_usuario_creacion || p.rolUsuarioCreacion || null,
+    rolUsuarioCreacion: p.rolUsuarioCreacion || p.rol_usuario_creacion || null,
     fecha_revision: p.fecha_revision || p.fechaRevision || null,
     fechaRevision: p.fechaRevision || p.fecha_revision || null,
     usuario_revision: p.usuario_revision ?? p.usuarioRevision ?? null,
@@ -279,9 +292,18 @@ export const {
   usuarioActivoId,
   usuarioActivo,
   rolActivo,
+  sucursalActivaId,
   cargarUsuarios,
   resolverNombreUsuario,
 } = useUsuarioActivo()
+
+export const listaSucursales = ref<SucursalDTO[]>([])
+export const sucursalSeleccionadaId = ref<number | null>(null)
+
+export async function cambiarSucursalFiltro(sucursalId: number | null) {
+  sucursalSeleccionadaId.value = sucursalId
+  await recargarTodo()
+}
 
 export const puedeCrearProveedor = computed(() => {
   return rolActivo.value === ROLES.SUPERVISOR || rolActivo.value === ROLES.PROPIETARIO
@@ -538,111 +560,11 @@ export function formatearFechaHora(fechaStr: string | null | undefined): string 
 }
 
 export function obtenerHistorialAuditoria(): InventarioPendiente[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_AUDITORIA)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch (_) {}
-
-  // Datos iniciales de auditoria historica para visualizar aprobados y rechazados
-  const inicial: InventarioPendiente[] = [
-    {
-      inventario_pendiente_id: 101,
-      inventarioPendienteId: 101,
-      sucursal_id: 1,
-      sucursalId: 1,
-      producto_id: 1,
-      productoId: 1,
-      nombre_producto: 'Leche Pil Entera 1L (Reposición)',
-      nombreProducto: 'Leche Pil Entera 1L (Reposición)',
-      codigo_barras: '7771234560012',
-      codigoBarras: '7771234560012',
-      codigo_interno: 'LEC001',
-      codigoInterno: 'LEC001',
-      categoria_id: 1,
-      categoriaId: 1,
-      precio_compra: 5.2,
-      precioCompra: 5.2,
-      precio_venta: 6.0,
-      precioVenta: 6.0,
-      stock_ingresado: 60,
-      stockIngresado: 60,
-      estado: 2, // 2: Aprobado
-      proveedor_id: 1,
-      proveedorId: 1,
-      descripcion_lote: 'Lote Pil Reposición Quincenal',
-      descripcionLote: 'Lote Pil Reposición Quincenal',
-      precio_lote: 312.0,
-      precioLote: 312.0,
-      fecha_vencimiento: getDateOffset(45),
-      fechaVencimiento: getDateOffset(45),
-      observacion_revision: 'Aprobado sin observaciones. Mercadería en perfecto estado.',
-      observacionRevision: 'Aprobado sin observaciones. Mercadería en perfecto estado.',
-      fecha_creacion: getDateOffset(-2) + 'T09:15:00',
-      fechaCreacion: getDateOffset(-2) + 'T09:15:00',
-      usuario_creacion: 1, // Cajero Juan
-      usuarioCreacion: 1,
-      fecha_revision: getDateOffset(-2) + 'T10:30:00',
-      fechaRevision: getDateOffset(-2) + 'T10:30:00',
-      usuario_revision: 2, // Supervisor Carlos
-      usuarioRevision: 2,
-      marca_baja: false,
-      marcaBaja: false
-    },
-    {
-      inventario_pendiente_id: 102,
-      inventarioPendienteId: 102,
-      sucursal_id: 1,
-      sucursalId: 1,
-      producto_id: null,
-      productoId: null,
-      nombre_producto: 'Yogurt Frutilla 1L Dañado',
-      nombreProducto: 'Yogurt Frutilla 1L Dañado',
-      codigo_barras: '7779900112233',
-      codigoBarras: '7779900112233',
-      codigo_interno: 'YOG001',
-      codigoInterno: 'YOG001',
-      categoria_id: 1,
-      categoriaId: 1,
-      precio_compra: 8.5,
-      precioCompra: 8.5,
-      precio_venta: 11.0,
-      precioVenta: 11.0,
-      stock_ingresado: 24,
-      stockIngresado: 24,
-      estado: 3, // 3: Rechazado
-      proveedor_id: 1,
-      proveedorId: 1,
-      descripcion_lote: 'Lote Yogurt Vencimiento Inmediato',
-      descripcionLote: 'Lote Yogurt Vencimiento Inmediato',
-      precio_lote: 204.0,
-      precioLote: 204.0,
-      fecha_vencimiento: getDateOffset(2),
-      fechaVencimiento: getDateOffset(2),
-      observacion_revision: 'Envases con pérdida de frío y vencimiento menor a 3 días. Rechazado y devuelto a proveedor.',
-      observacionRevision: 'Envases con pérdida de frío y vencimiento menor a 3 días. Rechazado y devuelto a proveedor.',
-      fecha_creacion: getDateOffset(-1) + 'T14:20:00',
-      fechaCreacion: getDateOffset(-1) + 'T14:20:00',
-      usuario_creacion: 1, // Cajero Juan
-      usuarioCreacion: 1,
-      fecha_revision: getDateOffset(-1) + 'T15:00:00',
-      fechaRevision: getDateOffset(-1) + 'T15:00:00',
-      usuario_revision: 2, // Supervisor Carlos
-      usuarioRevision: 2,
-      marca_baja: false,
-      marcaBaja: false
-    }
-  ]
-  guardarHistorialAuditoria(inicial)
-  return inicial
+  return []
 }
 
-export function guardarHistorialAuditoria(lista: InventarioPendiente[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY_AUDITORIA, JSON.stringify(lista))
-  } catch (_) {}
+export function guardarHistorialAuditoria(_lista: InventarioPendiente[]) {
+  // Sin almacenamiento local mock: la fuente de la verdad es 100% PostgreSQL
 }
 
 export const conteoEspera = computed(() => {
@@ -698,6 +620,8 @@ export const totalAlertasVencimiento = computed(() => {
 export interface StockFilaCombinada {
   inventario_id: number
   sucursal_id: number
+  codigo_sucursal?: string
+  ciudad_sucursal?: string
   stock: number
   en_descuento: boolean
   precio_descuento: number | null
@@ -735,7 +659,9 @@ export const filasStock = computed<StockFilaCombinada[]>(() => {
 
       return {
         inventario_id: item.inventario_id || item.inventarioId || 0,
-        sucursal_id: 1,
+        sucursal_id: item.sucursal_id || item.sucursalId || 1,
+        codigo_sucursal: item.codigo_sucursal || item.codigoSucursal || '',
+        ciudad_sucursal: item.ciudad_sucursal || item.ciudadSucursal || '',
         stock: item.stock ?? 0,
         en_descuento: Boolean(item.en_descuento ?? item.enDescuento),
         precio_descuento: item.precio_descuento ?? item.precioDescuento ?? null,
@@ -1242,7 +1168,8 @@ export async function abrirModalEditarPendiente(pendiente: InventarioPendiente) 
     agregarToast('Acceso Restringido', 'Solo Supervisores o Propietarios pueden rectificar registros en Sala de Espera.', 'warning')
     return
   }
-  await asegurarDatosActivosModal()
+  const sucTarget = pendiente.sucursal_id || (pendiente as any).sucursalId || (sucursalSeleccionadaId.value || sucursalActivaId.value || 1)
+  await asegurarDatosActivosModal(sucTarget)
   pendienteEnEdicion.value = pendiente
   const fuente = catalogoActivo.value.length > 0 ? catalogoActivo.value : catalogoBackend.value
   const prodMatch = fuente.find(p => (p.producto_id || p.productoId) === (pendiente.producto_id || pendiente.productoId))
@@ -1567,6 +1494,7 @@ export const modalCamaraVisible = ref(false)
 export const barcodeInputRef = ref<HTMLInputElement | null>(null)
 
 export const formRecepcion = reactive({
+  sucursal_id: null as number | null,
   codigo_barras: '',
   producto_id: null as number | null,
   nombre_producto: '',
@@ -1583,30 +1511,33 @@ export const formRecepcion = reactive({
   ingresar_directo_aprobado: false
 })
 
-export async function asegurarDatosActivosModal() {
+export async function asegurarDatosActivosModal(sucursalDestinoId?: number | null) {
   try {
     const promises: Promise<any>[] = []
+    const targetSucursalId = sucursalDestinoId != null
+      ? sucursalDestinoId
+      : (rolActivo.value !== 3 ? (sucursalActivaId.value || 1) : (sucursalSeleccionadaId.value || 1))
+
     if (catalogoActivo.value.length === 0) {
       promises.push(
-        inventarioService.listarCatalogo('ACTIVOS').then((res) => {
+        inventarioService.listarCatalogo('ACTIVOS', targetSucursalId).then((res) => {
           catalogoActivo.value = res || []
         }).catch((err) => console.error('Error al precargar catalogo activo para modal:', err))
       )
     }
-    if (proveedores.value.length === 0) {
-      promises.push(
-        proveedorService.listarProveedores('', '', 'ACTIVOS').then((res) => {
-          proveedores.value = (res || []).map((p: any) => ({
-            proveedor_id: p.proveedorId ?? p.proveedor_id ?? 1,
-            nombre_empresa: p.nombreEmpresa ?? p.nombre_empresa ?? '',
-            nombre_contacto: p.nombreContacto ?? p.nombre_contacto ?? '',
-            numero_contacto: p.numeroContacto ?? p.numero_contacto ?? '',
-            anotaciones: p.anotaciones ?? '',
-            marca_baja: Boolean(p.marcaBaja ?? p.marca_baja)
-          }))
-        }).catch((err) => console.error('Error al precargar proveedores para modal:', err))
-      )
-    }
+    // Siempre cargar o sincronizar proveedores estrictamente filtrados por la sucursal de destino del modal
+    promises.push(
+      proveedorService.listarProveedores('', '', 'ACTIVOS', targetSucursalId).then((res) => {
+        proveedores.value = (res || []).map((p: any) => ({
+          proveedor_id: p.proveedorId ?? p.proveedor_id ?? 1,
+          nombre_empresa: p.nombreEmpresa ?? p.nombre_empresa ?? '',
+          nombre_contacto: p.nombreContacto ?? p.nombre_contacto ?? '',
+          numero_contacto: p.numeroContacto ?? p.numero_contacto ?? '',
+          anotaciones: p.anotaciones ?? '',
+          marca_baja: Boolean(p.marcaBaja ?? p.marca_baja)
+        }))
+      }).catch((err) => console.error('Error al precargar proveedores para modal:', err))
+    )
     if (listaCategorias.value.length === 0) {
       promises.push(
         inventarioService.listarCategorias().then((res) => {
@@ -1627,11 +1558,21 @@ export async function asegurarDatosActivosModal() {
   }
 }
 
+export async function alCambiarSucursalRecepcion() {
+  if (formRecepcion.sucursal_id) {
+    await asegurarDatosActivosModal(formRecepcion.sucursal_id)
+    const primerProv = proveedores.value.find((p) => !p.marca_baja)
+    formRecepcion.proveedor_id = primerProv ? (primerProv.proveedor_id ?? (primerProv as any).proveedorId) : null
+  }
+}
+
 export async function abrirModalRecepcion() {
-  await asegurarDatosActivosModal()
+  const sucTarget = sucursalSeleccionadaId.value || sucursalActivaId.value || 1
+  await asegurarDatosActivosModal(sucTarget)
 
   ultimoCodigoBuscado = ''
   buscandoCodigo = false
+  formRecepcion.sucursal_id = sucTarget
   formRecepcion.codigo_barras = ''
   formRecepcion.producto_id = null
   formRecepcion.nombre_producto = ''
@@ -1812,9 +1753,12 @@ export async function guardarRecepcion() {
     (rolActivo.value === ROLES.SUPERVISOR || rolActivo.value === ROLES.PROPIETARIO) &&
     formRecepcion.ingresar_directo_aprobado
 
+  const targetSucursalId = formRecepcion.sucursal_id || sucursalSeleccionadaId.value || sucursalActivaId.value || 1
+
   try {
     if (esDirecto) {
       const payload: IngresoDirectoRequest = {
+        sucursalId: targetSucursalId,
         categoriaId: formRecepcion.categoria_id,
         nombreProducto: formRecepcion.nombre_producto,
         codigoInterno: formRecepcion.codigo_interno,
@@ -1837,7 +1781,7 @@ export async function guardarRecepcion() {
       )
     } else {
       const payload: RegistroPendienteRequest = {
-        sucursalId: 1,
+        sucursalId: targetSucursalId,
         productoId: formRecepcion.producto_id,
         nombreProducto: formRecepcion.nombre_producto,
         codigoBarras: formRecepcion.codigo_barras || null,
@@ -2036,19 +1980,27 @@ export async function alternarEstadoCategoria(cat: CategoriaDTO) {
   const nuevaBaja = !bajaActual
   const accion = nuevaBaja ? 'dar de baja lógica' : 'reactivar'
 
-  if (!confirm(`¿Está seguro de ${accion} la categoría "${nom}" (#${cod})?`)) {
-    return
-  }
-
-  try {
-    if (cod != null) {
-      await inventarioService.cambiarEstadoCategoria(cod, nuevaBaja)
-      agregarToast('Estado Actualizado', `Categoría "${nom}" fue ${nuevaBaja ? 'dada de baja lógica' : 'reactivada'}.`, 'info')
-      await Promise.all([recargarGestionCategorias(), recargarCategoriasActivas()])
+  modalConfirmacion.titulo = nuevaBaja ? 'Dar de Baja Categoría' : 'Reactivar Categoría'
+  modalConfirmacion.subtitulo = nuevaBaja ? 'Baja lógica de categoría paramétrica' : 'Restauración de categoría (marca_baja = false)'
+  modalConfirmacion.mensaje = `¿Está seguro de ${accion} la categoría "${nom}" (#${cod})?`
+  modalConfirmacion.alerta = nuevaBaja
+    ? 'Los productos asociados a esta categoría dejarán de estar disponibles para nuevos registros.'
+    : 'Se revertirá la baja lógica y volverá a estar disponible para asociar productos.'
+  modalConfirmacion.textoBoton = nuevaBaja ? 'Dar de Baja' : 'Reactivar y Restaurar'
+  modalConfirmacion.tipo = nuevaBaja ? 'danger' : 'success'
+  modalConfirmacion.onConfirmar = async () => {
+    try {
+      if (cod != null) {
+        await inventarioService.cambiarEstadoCategoria(cod, nuevaBaja)
+        agregarToast('Estado Actualizado', `Categoría "${nom}" fue ${nuevaBaja ? 'dada de baja lógica' : 'reactivada'}.`, 'info')
+        await Promise.all([recargarGestionCategorias(), recargarCategoriasActivas()])
+      }
+    } catch (err: any) {
+      agregarToast('Error al cambiar estado de categoría', extraerMensajeError(err), 'danger')
+      throw err
     }
-  } catch (err: any) {
-    agregarToast('Error al cambiar estado de categoría', extraerMensajeError(err), 'danger')
   }
+  modalConfirmacion.visible = true
 }
 
 // 2. Modal Proveedor Rápido (Control RBAC: Solo Supervisor y Propietario)
@@ -2097,18 +2049,21 @@ export async function guardarProveedorRapido() {
 
   guardandoProveedorRapido.value = true
   try {
+    const targetSucursalId = formRecepcion.sucursal_id || (rolActivo.value !== 3 ? (sucursalActivaId.value || 1) : (sucursalSeleccionadaId.value || 1))
+
     const res = await proveedorService.registrarProveedor({
       nombreEmpresa: formProveedorRapido.nombreEmpresa.trim(),
       nombreContacto: formProveedorRapido.nombreContacto.trim(),
       numeroContacto: formProveedorRapido.numeroContacto.trim(),
       anotaciones: formProveedorRapido.anotaciones.trim() || 'Registrado desde Ingreso de Mercadería',
-      usuarioCreacion: usuarioActivoId.value
+      usuarioCreacion: usuarioActivoId.value,
+      sucursalId: targetSucursalId,
     })
 
     const nuevoId = res.proveedorId
 
-    // Actualizar lista completa de proveedores desde GET /api/proveedores (forzando siempre ACTIVOS)
-    const listaActualizada = await proveedorService.listarProveedores('', '', 'ACTIVOS')
+    // Actualizar lista completa de proveedores para la sucursal activa
+    const listaActualizada = await proveedorService.listarProveedores('', '', 'ACTIVOS', targetSucursalId)
     proveedores.value = listaActualizada.map((p: any) => ({
       proveedor_id: p.proveedorId ?? p.proveedor_id,
       nombre_empresa: p.nombreEmpresa ?? p.nombre_empresa,
@@ -2147,19 +2102,35 @@ export async function recargarTodo() {
   recargaEnProgreso = true
   cargando.value = true
   try {
+    // Control RBAC: Si el rol no es Propietario (rolActivo !== 3), fijar obligatoriamente la sucursal del usuario
+    if (rolActivo.value !== ROLES.PROPIETARIO) {
+      sucursalSeleccionadaId.value = sucursalActivaId.value || 1
+    }
+
+    // Cargar sucursales si aún no están en memoria
+    if (listaSucursales.value.length === 0) {
+      try {
+        const sucs = await inventarioService.listarSucursales()
+        listaSucursales.value = sucs || []
+      } catch (err) {
+        console.error('Error al cargar sucursales:', err)
+      }
+    }
+
     const estado = selectedEstadoRegistro.value || 'ACTIVOS'
 
-    const peticionCatalogoFiltro = estado === 'ACTIVOS'
+    const peticionCatalogoFiltro = inventarioService.listarCatalogo(estado, sucursalSeleccionadaId.value)
+    const peticionCatalogoActivo = catalogoActivo.value.length === 0
       ? inventarioService.listarCatalogo('ACTIVOS')
-      : inventarioService.listarCatalogo(estado)
+      : Promise.resolve(catalogoActivo.value)
 
     const [kpiRes, lotesRes, pendientesRes, catalogoFiltroRes, catalogoActivoRes, provRes, catRes] = await Promise.allSettled([
-      inventarioService.obtenerKpis(),
-      inventarioService.listarLotes(estado),
-      inventarioService.listarPendientes(),
+      inventarioService.obtenerKpis(sucursalSeleccionadaId.value),
+      inventarioService.listarLotes(estado, sucursalSeleccionadaId.value),
+      inventarioService.listarPendientes(sucursalSeleccionadaId.value),
       peticionCatalogoFiltro,
-      estado === 'ACTIVOS' ? Promise.resolve(null) : inventarioService.listarCatalogo('ACTIVOS'),
-      proveedorService.listarProveedores('', '', 'ACTIVOS'),
+      peticionCatalogoActivo,
+      proveedorService.listarProveedores('', '', 'ACTIVOS', sucursalSeleccionadaId.value),
       inventarioService.listarCategorias()
     ])
 
@@ -2176,30 +2147,13 @@ export async function recargarTodo() {
     }
 
     if (pendientesRes.status === 'fulfilled' && pendientesRes.value) {
-      const backendPendientes = pendientesRes.value.map(normalizarPendiente)
-      const historial = obtenerHistorialAuditoria()
-      const mapa = new Map<number, InventarioPendiente>()
-
-      // 1. Agregar historial previo de auditoria (aprobados y rechazados)
-      historial.forEach((item) => {
-        mapa.set(item.inventario_pendiente_id, item)
-      })
-
-      // 2. Agregar / sobreescribir pendientes activos desde el backend
-      backendPendientes.forEach((item) => {
-        mapa.set(item.inventario_pendiente_id, item)
-      })
-
-      inventarioPendientes.value = Array.from(mapa.values())
+      inventarioPendientes.value = pendientesRes.value.map(normalizarPendiente)
     } else if (pendientesRes.status === 'rejected') {
       console.error('Error al listar pendientes:', pendientesRes.reason)
     }
 
     if (catalogoFiltroRes.status === 'fulfilled' && catalogoFiltroRes.value) {
       catalogoBackend.value = catalogoFiltroRes.value
-      if (estado === 'ACTIVOS') {
-        catalogoActivo.value = catalogoFiltroRes.value
-      }
     } else if (catalogoFiltroRes.status === 'rejected') {
       console.error('Error al listar catálogo filtrado:', catalogoFiltroRes.reason)
     }
@@ -2249,6 +2203,9 @@ export async function recargarTodo() {
 }
 
 export async function inicializarInventario() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_AUDITORIA)
+  } catch (_) {}
   await cargarUsuarios()
   await recargarTodo()
 }

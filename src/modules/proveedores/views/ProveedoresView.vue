@@ -11,11 +11,12 @@ import {
   type CrearProveedorRequest,
   type ActualizarProveedorRequest,
 } from '@/services/proveedorService'
+import { inventarioService, type SucursalDTO } from '@/services/inventarioService'
 
-const { usuarioActivoId, cargarUsuarios } = useUsuarioActivo()
+const { usuarioActivoId, rolActivo, sucursalActivaId, cargarUsuarios } = useUsuarioActivo()
 
 // ====================================================================
-// 1. ESTADO REACTIVO PRINCIPAL
+// 1. ESTADO REACTIVO PRINCIPAL Y RBAC DE SUCURSAL
 // ====================================================================
 
 const cargando = ref(false)
@@ -31,6 +32,24 @@ const listaProveedores = ref<ProveedorListado[]>([])
 const filtroBusqueda = ref('')
 const filtroProducto = ref('')
 const filtroEstado = ref<'ACTIVOS' | 'INACTIVOS' | 'TODOS'>('ACTIVOS')
+
+const listaSucursales = ref<SucursalDTO[]>([])
+const sucursalSeleccionadaId = ref<number | null>(null)
+
+const sucursalActivaNombre = computed(() => {
+  const targetId = sucursalSeleccionadaId.value || sucursalActivaId.value || 1
+  const suc = listaSucursales.value.find(s => (s.sucursalId || s.sucursal_id) === targetId)
+  if (!suc) {
+    return listaSucursales.value.length === 0 ? 'Cargando...' : `Sucursal #${targetId}`
+  }
+  const codigo = suc.codigoInterno || suc.codigo_interno || suc.codigo || `SUC-00${targetId}`
+  const nombre = suc.ciudad || suc.nombre || suc.direccion || 'Sucursal'
+  return `${codigo} - ${nombre}`
+})
+
+const puedeGestionarProveedores = computed(() => {
+  return rolActivo.value !== 1 // Cajero solo consulta lectura
+})
 
 // ====================================================================
 // 2. GESTIÓN DE NOTIFICACIONES TOAST
@@ -72,7 +91,8 @@ function extraerError(err: any): string {
 
 async function cargarKpis() {
   try {
-    kpis.value = await proveedorService.obtenerKpis()
+    const sucId = rolActivo.value !== 3 ? (sucursalActivaId.value || 1) : sucursalSeleccionadaId.value
+    kpis.value = await proveedorService.obtenerKpis(sucId)
   } catch (err: any) {
     console.error('Error cargando KPIs:', err)
   }
@@ -81,16 +101,24 @@ async function cargarKpis() {
 async function cargarProveedores() {
   cargando.value = true
   try {
+    if (rolActivo.value !== 3) {
+      sucursalSeleccionadaId.value = sucursalActivaId.value || 1
+    }
     listaProveedores.value = await proveedorService.listarProveedores(
       filtroBusqueda.value,
       filtroProducto.value,
-      filtroEstado.value
+      filtroEstado.value,
+      sucursalSeleccionadaId.value
     )
   } catch (err: any) {
     agregarToast('Error al cargar proveedores', extraerError(err), 'danger')
   } finally {
     cargando.value = false
   }
+}
+
+async function cambiarSucursal() {
+  await Promise.all([cargarKpis(), cargarProveedores()])
 }
 
 async function aplicarFiltros() {
@@ -118,16 +146,21 @@ const formProveedor = ref({
   nombreContacto: '',
   numeroContacto: '',
   anotaciones: '',
+  sucursalId: null as number | null,
 })
 
 function abrirModalCrear() {
   modoEdicion.value = false
   proveedorIdEdicion.value = null
+  const sucPorDefecto = rolActivo.value !== 3
+    ? (sucursalActivaId.value || 1)
+    : (sucursalSeleccionadaId.value || listaSucursales.value[0]?.sucursalId || (listaSucursales.value[0] as any)?.sucursal_id || 1)
   formProveedor.value = {
     nombreEmpresa: '',
     nombreContacto: '',
     numeroContacto: '',
     anotaciones: '',
+    sucursalId: sucPorDefecto,
   }
   modalAbmVisible.value = true
 }
@@ -140,6 +173,7 @@ function abrirModalEditar(p: ProveedorListado) {
     nombreContacto: p.nombreContacto,
     numeroContacto: p.numeroContacto,
     anotaciones: p.anotaciones || '',
+    sucursalId: p.sucursalId || (p as any).sucursal_id || (sucursalActivaId.value || 1),
   }
   modalAbmVisible.value = true
 }
@@ -162,6 +196,10 @@ async function guardarProveedor() {
     agregarToast('Validación', 'El número de contacto es obligatorio.', 'warning')
     return
   }
+  if (!formProveedor.value.sucursalId) {
+    agregarToast('Validación', 'Debe especificar la sucursal del distribuidor.', 'warning')
+    return
+  }
 
   guardando.value = true
   try {
@@ -172,6 +210,7 @@ async function guardarProveedor() {
         numeroContacto: formProveedor.value.numeroContacto.trim(),
         anotaciones: formProveedor.value.anotaciones.trim(),
         usuarioModificacion: usuarioActivoId.value,
+        sucursalId: formProveedor.value.sucursalId,
       }
       const res = await proveedorService.actualizarProveedor(proveedorIdEdicion.value, payload)
       agregarToast('Éxito', res.mensaje || 'Distribuidor actualizado correctamente.', 'success')
@@ -182,6 +221,7 @@ async function guardarProveedor() {
         numeroContacto: formProveedor.value.numeroContacto.trim(),
         anotaciones: formProveedor.value.anotaciones.trim(),
         usuarioCreacion: usuarioActivoId.value,
+        sucursalId: formProveedor.value.sucursalId,
       }
       const res = await proveedorService.registrarProveedor(payload)
       agregarToast('Éxito', res.mensaje || 'Distribuidor registrado correctamente.', 'success')
@@ -371,7 +411,17 @@ function getBadgeCaducidad(estado: string, dias: number | null) {
 }
 
 onMounted(async () => {
-  await Promise.all([cargarKpis(), cargarProveedores(), cargarUsuarios()])
+  await cargarUsuarios()
+  try {
+    const sucs = await inventarioService.listarSucursales()
+    listaSucursales.value = sucs || []
+  } catch (e) {
+    console.error('Error cargando sucursales en Proveedores:', e)
+  }
+  if (rolActivo.value !== 3) {
+    sucursalSeleccionadaId.value = sucursalActivaId.value || 1
+  }
+  await Promise.all([cargarKpis(), cargarProveedores()])
 })
 </script>
 
@@ -397,8 +447,39 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="prov-topbar-right">
-        <button type="button" class="prov-btn-primary" @click="abrirModalCrear">
+      <div class="prov-topbar-right" style="display: flex; align-items: center; gap: 0.75rem;">
+        <!-- CONTROL MULTI-SUCURSAL (RBAC) -->
+        <div v-if="rolActivo === 3" class="prov-branch-selector-card">
+          <span class="prov-branch-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-xs" style="width: 14px; height: 14px;">
+              <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
+            </svg>
+            Sucursal:
+          </span>
+          <select
+            v-model="sucursalSeleccionadaId"
+            class="prov-branch-select"
+            @change="cambiarSucursal"
+          >
+            <option :value="null">Todas las sucursales</option>
+            <option v-for="s in listaSucursales" :key="s.sucursalId || s.sucursal_id" :value="s.sucursalId || s.sucursal_id">
+              {{ s.codigoInterno || s.codigo_interno || s.codigo }} - {{ s.ciudad || s.nombre }}
+            </option>
+          </select>
+        </div>
+        <div v-else class="prov-branch-badge-card" title="Sucursal fijada según perfil de usuario">
+          <span class="prov-branch-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-xs" style="width: 14px; height: 14px;">
+              <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
+            </svg>
+            Sucursal:
+          </span>
+          <span class="prov-branch-fixed-badge">
+            {{ sucursalActivaNombre }}
+          </span>
+        </div>
+
+        <button v-if="puedeGestionarProveedores" type="button" class="prov-btn-primary" @click="abrirModalCrear">
           <!-- SVG: Plus / Nuevo -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -572,7 +653,15 @@ onMounted(async () => {
               <!-- Empresa -->
               <td>
                 <div class="prov-name-cell">
-                  <strong>{{ prov.nombreEmpresa }}</strong>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <strong>{{ prov.nombreEmpresa }}</strong>
+                    <span class="prov-branch-tag" :title="`Distribuidor asignado a ${prov.ciudadSucursal || 'Sucursal'}`">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                        <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
+                      </svg>
+                      {{ prov.codigoSucursal || `SUC-00${prov.sucursalId}` }} ({{ prov.ciudadSucursal || 'Central' }})
+                    </span>
+                  </div>
                   <span class="prov-text-muted-xs font-mono">ID: #{{ prov.proveedorId }} • Reg: {{ formatFecha(prov.fechaCreacion) }}</span>
                 </div>
               </td>
@@ -628,9 +717,10 @@ onMounted(async () => {
               <!-- Acciones -->
               <td class="text-right">
                 <div class="prov-actions-cell">
-                  <!-- Si el distribuidor está dado de baja (marcaBaja === true): ÚNICO botón de Restaurar -->
+                  <!-- Si el distribuidor está dado de baja (marcaBaja === true): ÚNICO botón de Restaurar (Supervisor / Propietario) -->
                   <template v-if="prov.marcaBaja">
                     <button
+                      v-if="puedeGestionarProveedores"
                       type="button"
                       class="prov-btn-action restore"
                       title="Reactivar / Restaurar distribuidor"
@@ -645,7 +735,7 @@ onMounted(async () => {
 
                   <!-- Si está activo (marcaBaja === false): botones normales -->
                   <template v-else>
-                    <!-- Botón: Ficha Logística / Auditoría -->
+                    <!-- Botón: Ficha Logística / Auditoría (Visible para todos los roles) -->
                     <button
                       type="button"
                       class="prov-btn-action view"
@@ -658,8 +748,9 @@ onMounted(async () => {
                       </svg>
                     </button>
 
-                    <!-- Botón: Editar -->
+                    <!-- Botón: Editar (Supervisor y Propietario) -->
                     <button
+                      v-if="puedeGestionarProveedores"
                       type="button"
                       class="prov-btn-action edit"
                       title="Editar datos del distribuidor"
@@ -671,8 +762,9 @@ onMounted(async () => {
                       </svg>
                     </button>
 
-                    <!-- Botón: Dar de Baja -->
+                    <!-- Botón: Dar de Baja (Supervisor y Propietario) -->
                     <button
+                      v-if="puedeGestionarProveedores"
                       type="button"
                       class="prov-btn-action delete"
                       title="Dar de baja distribuidor"
@@ -717,6 +809,32 @@ onMounted(async () => {
         </div>
 
         <form class="prov-modal-body" @submit.prevent="guardarProveedor">
+          <!-- Selector de Sucursal (Propietario) o Badge Fijo (Supervisor) -->
+          <div v-if="rolActivo === 3" class="prov-form-group">
+            <div class="prov-label-row">
+              <label class="prov-form-label">Sucursal Asignada <span class="required">*</span></label>
+            </div>
+            <select v-model="formProveedor.sucursalId" class="prov-select" required>
+              <option v-for="s in listaSucursales" :key="s.sucursalId || (s as any).sucursal_id" :value="s.sucursalId || (s as any).sucursal_id">
+                {{ s.codigoInterno || (s as any).codigo_interno }} - {{ s.ciudad || (s as any).nombre }}
+              </option>
+            </select>
+            <span class="prov-text-muted-xs">
+              El distribuidor quedará registrado con logística y lotes independientes en esta sucursal.
+            </span>
+          </div>
+          <div v-else class="prov-form-group">
+            <label class="prov-form-label">Sucursal Asignada:</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+              <span class="prov-branch-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                  <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
+                </svg>
+                {{ sucursalActivaNombre }}
+              </span>
+            </div>
+          </div>
+
           <!-- Campo 1: Nombre de Empresa -->
           <div class="prov-form-group">
             <div class="prov-label-row">
@@ -2245,6 +2363,73 @@ onMounted(async () => {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+.prov-branch-selector-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.prov-branch-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.prov-branch-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.prov-branch-select {
+  border: none;
+  background: transparent;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+}
+
+.prov-branch-fixed-badge {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #166534;
+  padding: 0.2rem 0.5rem;
+  background-color: #dcfce7;
+  border-radius: 4px;
+}
+
+.prov-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 /* RESPONSIVE */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 import CustomSelect from '@/components/common/CustomSelect.vue'
 import {
@@ -9,8 +9,20 @@ import {
   modoProductoNuevoEdicion, productoSeleccionadoEdicionId, onSeleccionarProductoCatalogoEdicion, redirigirAProveedores, removerToast, resetFiltros, resolverInfoUsuario, router, searchQuery, selectedCategoria, selectedEstadoProducto, selectedProveedor, showNotificationsDrawer, simularEscaneo, toastCounter, toasts, totalAlertasVencimiento, totalEnSalaEspera, totalProductosCatalogo, totalStockActivo,
   selectedEstadoRegistro, onEstadoRegistroChange, reactivarItemInventario, darBajaProductoCatalogo, reactivarProductoCatalogo,
   modalConfirmacion, cerrarModalConfirmacion, ejecutarAccionConfirmacion,
-  catalogoActivo, asegurarDatosActivosModal
+  catalogoActivo, asegurarDatosActivosModal, alCambiarSucursalRecepcion,
+  listaSucursales, sucursalSeleccionadaId, sucursalActivaId, cambiarSucursalFiltro
 } from './InventarioView'
+
+const sucursalActivaNombre = computed(() => {
+  const targetId = sucursalSeleccionadaId.value || sucursalActivaId.value || 1
+  const suc = listaSucursales.value.find(s => (s.sucursalId || s.sucursal_id) === targetId)
+  if (!suc) {
+    return listaSucursales.value.length === 0 ? 'Cargando...' : `Sucursal #${targetId}`
+  }
+  const codigo = suc.codigoInterno || suc.codigo_interno || suc.codigo || `SUC-00${targetId}`
+  const nombre = suc.ciudad || suc.nombre || suc.direccion || 'Sucursal'
+  return `${codigo} - ${nombre}`
+})
 
 onMounted(async () => {
   await inicializarInventario()
@@ -44,29 +56,34 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
       </div>
 
       <div class="inv-topbar-right">
-        <!-- SELECTOR DE USUARIO ACTIVO (100% DINÁMICO DE POSTGRESQL) -->
-        <div class="inv-role-selector-card">
+        <!-- CONTROL MULTI-SUCURSAL (RBAC: Propietario elige / Supervisor y Cajero fijos) -->
+        <div v-if="rolActivo === ROLES.PROPIETARIO" class="inv-role-selector-card inv-branch-selector-card">
           <span class="inv-role-label">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
+              <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
             </svg>
-            Usuario Activo:
+            Sucursal:
           </span>
-          <select v-model="usuarioActivoId" class="inv-role-select">
-            <option v-for="u in listaUsuarios" :key="u.usuarioId || u.usuario_id" :value="u.usuarioId || u.usuario_id">
-              {{ u.usuarioId || u.usuario_id }}: {{ u.nombreCompleto || u.nombre_completo || u.nombres }} ({{ u.rolNombre || u.rol_nombre }})
+          <select
+            v-model="sucursalSeleccionadaId"
+            class="inv-role-select"
+            @change="cambiarSucursalFiltro(sucursalSeleccionadaId)"
+          >
+            <option :value="null">Todas las sucursales</option>
+            <option v-for="s in listaSucursales" :key="s.sucursalId || s.sucursal_id" :value="s.sucursalId || s.sucursal_id">
+              {{ s.codigoInterno || s.codigo_interno || s.codigo }} - {{ s.ciudad || s.nombre }}
             </option>
           </select>
-          <span
-            class="inv-role-pill-badge"
-            :style="{
-              backgroundColor: getBadgeRol(rolActivo).bg,
-              color: getBadgeRol(rolActivo).text,
-              borderColor: getBadgeRol(rolActivo).border
-            }"
-          >
-            {{ getBadgeRol(rolActivo).label }}
+        </div>
+        <div v-else class="inv-role-selector-card inv-branch-badge-card" title="Sucursal fijada según perfil de usuario">
+          <span class="inv-role-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
+              <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 11h2M13 11h2M9 15h2M13 15h2" />
+            </svg>
+            Sucursal:
+          </span>
+          <span class="inv-branch-fixed-badge">
+            {{ sucursalActivaNombre }}
           </span>
         </div>
 
@@ -509,6 +526,9 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                   <div class="inv-col-lot">
                     <span class="inv-lot-id font-mono">#{{ fila.lote_id }} - {{ fila.descripcion_lote }}</span>
                     <span class="inv-lot-prov">{{ fila.nombre_proveedor }}</span>
+                    <span v-if="fila.codigo_sucursal" class="inv-badge-sucursal font-mono">
+                      {{ fila.codigo_sucursal }}
+                    </span>
                   </div>
                 </td>
 
@@ -714,7 +734,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                           }"
                         >
                           <span class="inv-role-dot" :style="{ backgroundColor: getBadgeUsuario(item.usuario_creacion).text }"></span>
-                          {{ getBadgeUsuario(item.usuario_creacion).label }}
+                          {{ item.rol_usuario_creacion || item.rolUsuarioCreacion || getBadgeUsuario(item.usuario_creacion).label }}
                         </span>
                         <span class="inv-pend-date font-mono">{{ formatearFechaCorta(item.fecha_creacion) }}</span>
                       </div>
@@ -754,6 +774,9 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                 <td>
                   <div class="inv-col-lot">
                     <span class="inv-lot-id">{{ item.descripcion_lote }}</span>
+                    <span v-if="item.codigo_sucursal || item.codigoSucursal" class="inv-badge-sucursal font-mono">
+                      {{ item.codigo_sucursal || item.codigoSucursal }}
+                    </span>
                     <span v-if="item.fecha_vencimiento" class="inv-lot-venc font-mono">
                       Vence: {{ item.fecha_vencimiento }}
                     </span>
@@ -795,7 +818,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                       <span>Pendiente</span>
                     </span>
 
-                    <span v-if="item.usuario_revision" class="inv-audit-sub">
+                    <span v-if="item.usuario_revision || item.nombre_usuario_revision" class="inv-audit-sub">
                       por {{ item.nombre_usuario_revision || resolverNombreUsuario(item.usuario_revision) }}
                     </span>
                     <span v-else class="inv-audit-sub muted">
@@ -1107,6 +1130,19 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
         </header>
 
         <form @submit.prevent="guardarRecepcion" class="inv-modal-body">
+          <!-- SELECCION DE SUCURSAL DESTINO (PROPIETARIO) -->
+          <div v-if="rolActivo === ROLES.PROPIETARIO" class="inv-field-group" style="margin-bottom: 1rem;">
+            <label class="inv-label">
+              <span class="inv-label-required">Sucursal Física de Ingreso *</span>
+              <span class="inv-label-hint">Seleccione en qué sucursal ingresará este stock</span>
+            </label>
+            <select v-model="formRecepcion.sucursal_id" class="inv-input" required @change="alCambiarSucursalRecepcion">
+              <option v-for="s in listaSucursales" :key="s.sucursalId || s.sucursal_id" :value="s.sucursalId || s.sucursal_id">
+                {{ s.codigoInterno || s.codigo_interno || s.codigo }} - {{ s.ciudad || s.nombre }}
+              </option>
+            </select>
+          </div>
+
           <!-- SECCION 1: IDENTIFICACION DEL PRODUCTO -->
           <div class="inv-form-section">
             <span class="inv-section-title">Paso 1: Identificación del Producto (Catálogo)</span>
@@ -1683,8 +1719,8 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                   class="inv-mode-toggle-btn"
                   @click="modoProductoNuevoEdicion = !modoProductoNuevoEdicion"
                 >
-                  <span v-if="!modoProductoNuevoEdicion">✍️ Escribir manual</span>
-                  <span v-else>📋 Escoger de BD</span>
+                  <span v-if="!modoProductoNuevoEdicion">Escribir manual</span>
+                  <span v-else>Escoger de BD</span>
                 </button>
               </div>
 
@@ -1695,7 +1731,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                 :options="opcionesProductosCatalogo"
                 placeholder="Seleccionar producto existente..."
                 :show-action="true"
-                action-label="✍️ Escribir nombre manual..."
+                action-label="Escribir nombre manual..."
                 @action="modoProductoNuevoEdicion = true"
                 @update:model-value="onSeleccionarProductoCatalogoEdicion"
               />
@@ -2689,31 +2725,31 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
               </svg>
               <span>{{ modalConfirmacion.alerta }}</span>
             </div>
-
-            <footer class="inv-modal-footer">
-              <button
-                type="button"
-                class="inv-btn-secondary"
-                @click="cerrarModalConfirmacion"
-                :disabled="modalConfirmacion.procesando"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                class="inv-btn-primary"
-                :class="modalConfirmacion.tipo"
-                @click="ejecutarAccionConfirmacion"
-                :disabled="modalConfirmacion.procesando"
-              >
-                <svg v-if="modalConfirmacion.procesando" class="inv-spinner inv-icon-xs" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-                </svg>
-                <span>{{ modalConfirmacion.procesando ? 'Procesando...' : modalConfirmacion.textoBoton }}</span>
-              </button>
-            </footer>
           </div>
         </div>
+
+        <footer class="inv-modal-footer">
+          <button
+            type="button"
+            class="inv-btn-secondary"
+            @click="cerrarModalConfirmacion"
+            :disabled="modalConfirmacion.procesando"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="inv-btn-primary"
+            :class="modalConfirmacion.tipo"
+            @click="ejecutarAccionConfirmacion"
+            :disabled="modalConfirmacion.procesando"
+          >
+            <svg v-if="modalConfirmacion.procesando" class="inv-spinner inv-icon-xs" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+            </svg>
+            <span>{{ modalConfirmacion.procesando ? 'Procesando...' : modalConfirmacion.textoBoton }}</span>
+          </button>
+        </footer>
       </div>
     </div>
 
