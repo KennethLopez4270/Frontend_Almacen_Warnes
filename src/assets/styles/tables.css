@@ -1,0 +1,245 @@
+/* ====================================================================
+   ARQUITECTURA CSS COMPARTIDA: TABLAS ERP
+   Molde visual exacto: InventarioView.css (Líneas 721-786, 974-1049)
+   Selectores unificados para:
+   - InventarioView (.inv-table-*)
+   - ProveedoresView (.prov-table-*)
+   - UsuariosView (.table-*, .data-table)
+   ==================================================================== */
+
+.inv-table-card,
+.prov-table-card,
+.table-container {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.prov-table-header-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prov-table-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.prov-table-count {
+  font-size: 0.8rem;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.inv-table-responsive,
+.prov-table-responsive,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.inv-table-responsive.max-h-500,
+.prov-table-responsive.max-h-500 {
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.inv-table,
+.prov-table,
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.inv-table thead th,
+.inv-table th,
+.prov-table th,
+.data-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.inv-table tbody tr,
+.prov-table tbody tr,
+.data-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.12s ease;
+}
+
+.inv-table tbody tr:hover,
+.prov-table tr:hover td,
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.inv-table tbody tr.row-warning-venc,
+.data-table tbody tr.row-alert {
+  background-color: #fffdfa;
+}
+
+.inv-table tbody tr.row-warning-venc:hover,
+.data-table tbody tr.row-alert:hover {
+  background-color: #fffbeb;
+}
+
+.inv-table tbody td,
+.inv-table td,
+.prov-table td,
+.data-table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.th-id {
+  width: 65px;
+}
+
+.th-actions {
+  width: 140px;
+  text-align: right;
+}
+
+.inv-table-empty,
+.prov-table-empty,
+.empty-state,
+.loading-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.prov-empty-icon,
+.empty-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 0.75rem auto;
+  color: #cbd5e1;
+}
+
+/* Filas dadas de baja / Soft delete */
+.row-baja,
+.prov-row-baja {
+  opacity: 0.62;
+  background-color: #f8fafc !important;
+}
+
+.row-baja:hover,
+.prov-row-baja:hover td {
+  background-color: #f1f5f9 !important;
+}
+
+.inv-badge-baja {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  margin-left: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Acciones en Tabla */
+.inv-actions-box,
+.prov-actions-cell,
+.td-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.text-right.td-actions,
+.prov-actions-cell,
+.td-actions {
+  justify-content: flex-end;
+}
+
+.inv-actions-box {
+  justify-content: center;
+}
+
+.inv-btn-action,
+.prov-btn-action,
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.inv-btn-action:hover,
+.prov-btn-action:hover,
+.action-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.inv-btn-action.active-offer {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.inv-btn-action.danger:hover,
+.prov-btn-action.delete:hover,
+.action-btn-danger:hover {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.prov-btn-action.view:hover {
+  background-color: #f0f9ff;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.prov-btn-action.edit:hover,
+.action-btn-warning:hover {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.inv-btn-action.inv-btn-restore,
+.prov-btn-action.restore {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.inv-btn-action.inv-btn-restore:hover,
+.prov-btn-action.restore:hover {
+  background-color: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}

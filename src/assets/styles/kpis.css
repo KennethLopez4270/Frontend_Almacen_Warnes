@@ -1,0 +1,135 @@
+/* ====================================================================
+   ARQUITECTURA CSS COMPARTIDA: TARJETAS KPIS
+   Molde visual exacto: InventarioView.css (Líneas 443-516)
+   Selectores unificados para:
+   - InventarioView (.inv-kpi-*)
+   - ProveedoresView (.prov-kpi-*)
+   - UsuariosView (.kpi-*)
+   ==================================================================== */
+
+.inv-kpi-grid,
+.prov-kpi-grid,
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.inv-kpi-card,
+.prov-kpi-card,
+.kpi-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inv-kpi-card,
+.prov-kpi-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.inv-kpi-card:hover,
+.prov-kpi-card:hover,
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.inv-kpi-info,
+.prov-kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inv-kpi-label,
+.prov-kpi-label,
+.kpi-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.inv-kpi-value,
+.prov-kpi-value,
+.kpi-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.25rem 0 0.15rem;
+  line-height: 1.1;
+}
+
+.inv-kpi-sub,
+.prov-kpi-sub,
+.kpi-desc {
+  font-size: 0.725rem;
+  color: #64748b;
+}
+
+.inv-kpi-icon-box,
+.prov-kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background-color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.inv-kpi-icon-box.amber,
+.prov-kpi-icon-box.amber {
+  background-color: #fffbeb;
+  color: #92400e;
+}
+
+.inv-kpi-icon-box.rose,
+.prov-kpi-icon-box.rose {
+  background-color: #fef2f2;
+  color: #991b1b;
+}
+
+.prov-kpi-icon-box.blue {
+  background-color: #f0f9ff;
+  color: #0284c7;
+}
+
+.prov-kpi-icon-box.emerald {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+/* Modificadores de Alerta en KPIs */
+.inv-kpi-highlight-amber,
+.prov-kpi-card.prov-kpi-highlight-amber,
+.kpi-card-highlight {
+  border-color: #fde68a;
+  background-color: #fffbeb;
+}
+
+.inv-kpi-highlight-rose {
+  border-color: #fecaca;
+  background-color: #fef2f2;
+}

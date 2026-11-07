@@ -1,0 +1,326 @@
+/* ====================================================================
+   ARQUITECTURA CSS COMPARTIDA: LAYOUT, TOPBAR Y UTILIDADES
+   Molde visual exacto: InventarioView.css (Líneas 6-92, 1889-1977)
+   Selectores unificados para:
+   - InventarioView (.inv-wrapper, .inv-topbar-*)
+   - ProveedoresView (.prov-wrapper, .prov-topbar-*)
+   - UsuariosView (.user-wrapper, .topbar-*)
+   ==================================================================== */
+
+.inv-wrapper,
+.prov-wrapper,
+.user-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #0f172a;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 80px);
+  font-family: inherit;
+}
+
+.inv-topbar,
+.prov-topbar,
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.inv-topbar-left,
+.prov-topbar-left,
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.inv-page-title-box,
+.page-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.inv-page-icon,
+.prov-page-icon,
+.page-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.inv-page-title,
+.prov-page-title,
+.page-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.inv-page-subtitle,
+.prov-page-subtitle,
+.page-subtitle {
+  font-size: 0.85rem;
+  color: #475569;
+  margin-top: 0.15rem;
+}
+
+.inv-topbar-right,
+.prov-topbar-right,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Selector y badges de sucursales en Topbar */
+.inv-branch-selector-card,
+.prov-branch-selector-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.inv-branch-badge-card,
+.prov-branch-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.prov-branch-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.prov-branch-select {
+  border: none;
+  background: transparent;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+}
+
+.inv-branch-fixed-badge,
+.prov-branch-fixed-badge {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #166534;
+  padding: 0.2rem 0.5rem;
+  background-color: #dcfce7;
+  border-radius: 4px;
+}
+
+.prov-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+/* Tipografias y utilidades */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.prov-text-muted-xs {
+  font-size: 0.725rem;
+  color: #64748b;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+.text-sm {
+  font-size: 0.8rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+/* Toasts */
+.inv-toast-container,
+.prov-toast-container,
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 380px;
+}
+
+.inv-toast,
+.prov-toast,
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #cbd5e1;
+}
+
+.inv-toast.success,
+.inv-toast.toast-success,
+.prov-toast.success,
+.toast-success {
+  border-left-color: #16a34a;
+}
+
+.inv-toast.danger,
+.inv-toast.toast-danger,
+.inv-toast.error,
+.prov-toast.danger,
+.prov-toast.error,
+.toast-danger {
+  border-left-color: #dc2626;
+}
+
+.inv-toast.warning,
+.inv-toast.toast-warning,
+.prov-toast.warning,
+.toast-warning {
+  border-left-color: #d97706;
+}
+
+.inv-toast.info,
+.inv-toast.toast-info,
+.prov-toast.info,
+.toast-info {
+  border-left-color: #2563eb;
+}
+
+.inv-toast-body,
+.inv-toast-content,
+.prov-toast-content,
+.toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.inv-toast-title,
+.prov-toast-title,
+.toast-title {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.85rem;
+}
+
+.inv-toast-msg,
+.prov-toast-msg,
+.toast-message {
+  color: #475569;
+  line-height: 1.35;
+  font-size: 0.8rem;
+}
+
+.inv-toast-close,
+.prov-toast-close,
+.toast-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  margin-left: auto;
+}
+
+.inv-toast-close:hover,
+.prov-toast-close:hover,
+.toast-close:hover {
+  color: #0f172a;
+}
+
+/* Spinners */
+.inv-spinner,
+.prov-spinner,
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: currentColor;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+.spinner-large {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-radius: 50%;
+  border-top-color: #0f172a;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.75rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

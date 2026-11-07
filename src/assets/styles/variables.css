@@ -1,0 +1,46 @@
+/* ====================================================================
+   VARIABLES Y TOKENS DE DISEÑO - ERP EMPRESARIAL
+   Paleta extraída de InventarioView.css:
+   #0F172A, #1E293B, #F8FAFC, #FFFFFF, #E2E8F0, #CBD5E1, #64748B, #475569
+   ==================================================================== */
+
+:root {
+  --erp-bg-page: #f8fafc;
+  --erp-bg-card: #ffffff;
+  --erp-text-main: #0f172a;
+  --erp-text-body: #1e293b;
+  --erp-text-secondary: #334155;
+  --erp-text-muted: #64748b;
+  --erp-text-subtle: #94a3b8;
+
+  --erp-border-light: #e2e8f0;
+  --erp-border-input: #cbd5e1;
+  --erp-border-row: #f1f5f9;
+
+  --erp-btn-primary-bg: #0f172a;
+  --erp-btn-primary-hover: #1e293b;
+
+  --erp-danger: #991b1b;
+  --erp-danger-bg: #fef2f2;
+  --erp-danger-border: #fecaca;
+
+  --erp-warning: #ea580c;
+  --erp-warning-bg: #fff7ed;
+  --erp-warning-border: #fed7aa;
+
+  --erp-success: #16a34a;
+  --erp-success-bg: #f0fdf4;
+  --erp-success-border: #bbf7d0;
+
+  --erp-radius-sm: 4px;
+  --erp-radius-md: 6px;
+  --erp-radius-lg: 8px;
+  --erp-radius-xl: 10px;
+  --erp-radius-pill: 9999px;
+
+  --erp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --erp-shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  --erp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --erp-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+}
+

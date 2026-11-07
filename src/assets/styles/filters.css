@@ -1,0 +1,190 @@
+/* ====================================================================
+   ARQUITECTURA CSS COMPARTIDA: FILTROS Y BARRAS DE HERRAMIENTAS
+   Molde visual exacto: InventarioView.css (Líneas 570-720)
+   Selectores unificados para:
+   - InventarioView (.inv-filter-*, .inv-search-*)
+   - ProveedoresView (.prov-toolbar-*, .prov-filters-*)
+   - UsuariosView (.filter-*, .search-*)
+   ==================================================================== */
+
+.inv-filter-panel,
+.prov-toolbar-card,
+.filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+.prov-filters-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 210px auto;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.prov-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.prov-filter-label {
+  font-size: 0.785rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.prov-filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inv-search-input-box,
+.prov-input-with-icon,
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inv-search-input-box .search-icon,
+.prov-icon-input,
+.search-box .search-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: #94a3b8;
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+}
+
+.inv-search-input,
+.prov-input-with-icon .prov-input,
+.search-input {
+  width: 100%;
+  padding: 0.6rem 2.2rem 0.6rem 2.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #0f172a;
+  outline: none;
+  background-color: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.inv-search-input:focus,
+.prov-input-with-icon .prov-input:focus,
+.search-input:focus {
+  border-color: #0f172a;
+  background-color: #ffffff;
+}
+
+.inv-search-clear,
+.search-clear {
+  position: absolute;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.inv-search-clear:hover,
+.search-clear:hover {
+  color: #0f172a;
+}
+
+/* Controles y selectores de filtros */
+.inv-filter-controls,
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inv-filter-select,
+.prov-select,
+.filter-select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #334155;
+  background-color: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.inv-filter-select:focus,
+.prov-select:focus,
+.filter-select:focus {
+  border-color: #0f172a;
+  background-color: #ffffff;
+}
+
+.inv-filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inv-filter-toggle-btn:hover {
+  background-color: #f8fafc;
+}
+
+.inv-filter-toggle-btn.active {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+  font-weight: 600;
+}
+
+.inv-btn-reset-filters {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inv-btn-reset-filters:hover {
+  color: #0f172a;
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.825rem;
+  color: #475569;
+  font-weight: 500;
+  user-select: none;
+}
+
+.toggle-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0f172a;
+}

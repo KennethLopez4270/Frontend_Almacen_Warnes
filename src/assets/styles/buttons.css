@@ -1,0 +1,191 @@
+/* ====================================================================
+   ARQUITECTURA CSS COMPARTIDA: BOTONES
+   Molde visual exacto: InventarioView.css (Líneas 203-285, 1697-1715)
+   Selectores unificados para:
+   - InventarioView (.inv-btn-*)
+   - ProveedoresView (.prov-btn-*)
+   - UsuariosView (.btn-*)
+   ==================================================================== */
+
+/* Boton Primario */
+.inv-btn-primary,
+.prov-btn-primary,
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  line-height: 1.25;
+}
+
+.inv-btn-primary:hover:not(:disabled),
+.prov-btn-primary:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  background-color: #1e293b;
+  border-color: #1e293b;
+}
+
+/* Boton Secundario */
+.inv-btn-secondary,
+.prov-btn-secondary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.25;
+}
+
+.inv-btn-secondary:hover:not(:disabled),
+.prov-btn-secondary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* Boton Peligro / Danger */
+.inv-btn-danger,
+.prov-btn-danger,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: #991b1b;
+  color: #ffffff;
+  border: 1px solid #991b1b;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  line-height: 1.25;
+}
+
+.inv-btn-danger:hover:not(:disabled),
+.prov-btn-danger:hover:not(:disabled),
+.btn-danger:hover:not(:disabled) {
+  background-color: #7f1d1d;
+  border-color: #7f1d1d;
+}
+
+/* Boton Advertencia / Warning */
+.inv-btn-warning,
+.prov-btn-warning,
+.btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: #ea580c;
+  color: #ffffff;
+  border: 1px solid #ea580c;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  line-height: 1.25;
+}
+
+.inv-btn-warning:hover:not(:disabled),
+.prov-btn-warning:hover:not(:disabled),
+.btn-warning:hover:not(:disabled) {
+  background-color: #c2410c;
+  border-color: #c2410c;
+}
+
+/* Estados Deshabilitados */
+.inv-btn-primary:disabled,
+.prov-btn-primary:disabled,
+.btn-primary:disabled,
+.inv-btn-secondary:disabled,
+.prov-btn-secondary:disabled,
+.btn-secondary:disabled,
+.inv-btn-danger:disabled,
+.prov-btn-danger:disabled,
+.btn-danger:disabled,
+.inv-btn-warning:disabled,
+.prov-btn-warning:disabled,
+.btn-warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modificadores Semanticos de Boton Primario (Modales) */
+.inv-btn-primary.success,
+.prov-btn-primary.success,
+.btn-primary.success {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.inv-btn-primary.success:hover:not(:disabled),
+.prov-btn-primary.success:hover:not(:disabled),
+.btn-primary.success:hover:not(:disabled) {
+  background-color: #047857;
+  border-color: #047857;
+}
+
+.inv-btn-primary.danger,
+.prov-btn-primary.danger,
+.btn-primary.danger {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.inv-btn-primary.danger:hover:not(:disabled),
+.prov-btn-primary.danger:hover:not(:disabled),
+.btn-primary.danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Iconos de Boton */
+.btn-icon,
+.inv-icon-xs,
+.prov-icon-xs {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.inv-icon-sm,
+.prov-icon-sm {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.inv-icon-md,
+.prov-icon-md {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+

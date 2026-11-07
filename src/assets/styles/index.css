@@ -1,0 +1,14 @@
+/* ====================================================================
+   ARQUITECTURA CSS GLOBAL - TIENDA WARNES ERP
+   Design System compartido basado en el molde visual de InventarioView
+   ==================================================================== */
+
+@import './variables.css';
+@import './layout.css';
+@import './buttons.css';
+@import './tables.css';
+@import './modals.css';
+@import './filters.css';
+@import './kpis.css';
+@import './badges.css';
+
