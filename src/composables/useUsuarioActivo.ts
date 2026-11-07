@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { usuarioService, type UsuarioDTO } from '@/services/usuarioService'
+import { usuarioService, type UsuarioDTO } from '@/modules/seguridad/services/usuarioService'
 import { useAuthStore } from '@/stores/auth'
 
 // Estado reactivo compartido a nivel de módulo (Singleton)

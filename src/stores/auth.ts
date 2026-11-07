@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { seguridadService, type LoginRequestDTO } from '@/modules/modulo_seguridad/services/seguridadService'
+import { seguridadService, type LoginRequestDTO } from '@/modules/seguridad/services/seguridadService'
 import { ROLES_USUARIO, MAPA_ROLES } from '@/constants/mapeoEstados'
 
 const STORAGE_KEYS = {

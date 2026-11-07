@@ -24,8 +24,8 @@ import {
   type ProveedorDTO,
   type CategoriaDTO,
   type SucursalDTO
-} from '@/services/inventarioService'
-import { proveedorService } from '@/services/proveedorService'
+} from '@/modules/inventario/services/inventarioService'
+import { proveedorService } from '@/modules/proveedores/services/proveedorService'
 import { useUsuarioActivo } from '@/composables/useUsuarioActivo'
 
 // ====================================================================
