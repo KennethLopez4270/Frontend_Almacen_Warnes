@@ -6,6 +6,8 @@ import {
   cargando,
   usuarios,
   usuariosActivosDetalle,
+  listaSucursales,
+  obtenerEtiquetaSucursal,
   searchQuery,
   selectedRol,
   selectedSucursal,
@@ -25,12 +27,14 @@ import {
   modalCrearVisible,
   formCrear,
   cargandoCrear,
+  onRolChangeCrear,
   abrirModalCrear,
   guardarNuevoUsuario,
   modalModificarVisible,
   usuarioAEditar,
   formModificar,
   cargandoModificar,
+  onRolChangeModificar,
   abrirModalModificar,
   guardarModificacion,
   modalPasswordVisible,
@@ -90,7 +94,7 @@ onMounted(async () => {
           <div>
             <h1 class="page-title">Gestión de Usuarios</h1>
             <p class="page-subtitle">
-              Administración centralizada de cuentas, roles y políticas de seguridad (PostgreSQL + Spring Boot)
+              Administración centralizada de cuentas, roles y políticas de seguridad corporativas
             </p>
           </div>
         </div>
@@ -203,9 +207,9 @@ onMounted(async () => {
         <div class="select-wrapper">
           <select v-model="selectedSucursal" class="filter-select" @change="cargarUsuarios">
             <option value="">Todas las Sucursales</option>
-            <option :value="1">Sucursal 1 (Warnes)</option>
-            <option :value="2">Sucursal 2</option>
-            <option :value="3">Sucursal 3</option>
+            <option v-for="suc in listaSucursales" :key="suc.sucursalId" :value="suc.sucursalId">
+              {{ suc.codigoInterno }} - {{ suc.ciudad }}
+            </option>
           </select>
         </div>
       </div>
@@ -223,11 +227,11 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- TABLA DE USUARIOS (fn_usuarios_listar) -->
+    <!-- TABLA DE USUARIOS -->
     <section class="table-container">
       <div v-if="cargando" class="loading-state">
         <div class="spinner-large"></div>
-        <p>Consultando base de datos PostgreSQL...</p>
+        <p>Cargando lista de usuarios...</p>
       </div>
 
       <div v-else-if="usuarios.length === 0" class="empty-state">
@@ -275,10 +279,13 @@ onMounted(async () => {
               </td>
               <td>
                 <span v-if="u.sucursalId" class="sucursal-badge">
-                  Sucursal #{{ u.sucursalId }}
+                  {{ obtenerEtiquetaSucursal(u.sucursalId) }}
+                </span>
+                <span v-else-if="u.sucursalId === 0" class="sucursal-badge" style="background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                  Todas (Global)
                 </span>
                 <span v-else class="text-muted text-xs italic">
-                  Central / Global
+                  Sin Asignar
                 </span>
               </td>
               <td>
@@ -299,7 +306,7 @@ onMounted(async () => {
                   title="Modificar datos"
                   @click="abrirModalModificar(u)"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
@@ -316,7 +323,7 @@ onMounted(async () => {
                   title="Restablecer contraseña (Propietario)"
                   @click="abrirModalPassword(u)"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
@@ -329,7 +336,7 @@ onMounted(async () => {
                   title="Dar de baja lógica"
                   @click="abrirModalBaja(u)"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                   </svg>
@@ -351,7 +358,7 @@ onMounted(async () => {
         <div class="modal-header">
           <div>
             <h2 class="modal-title">Registrar Nuevo Usuario</h2>
-            <p class="modal-subtitle">Se insertará en PostgreSQL invocando sp_usuarios_insertar</p>
+            <p class="modal-subtitle">Complete los datos para dar de alta una nueva cuenta de usuario</p>
           </div>
           <button type="button" class="btn-close-modal" @click="modalCrearVisible = false">×</button>
         </div>
@@ -370,7 +377,7 @@ onMounted(async () => {
             </div>
             <div class="form-group flex-1">
               <label class="form-label">Rol del Sistema *</label>
-              <select v-model="formCrear.rolId" class="form-input" required>
+              <select v-model="formCrear.rolId" class="form-select" required @change="onRolChangeCrear">
                 <option :value="ROLES_USUARIO.CAJERO">1 - Cajero</option>
                 <option :value="ROLES_USUARIO.SUPERVISOR">2 - Supervisor</option>
                 <option :value="ROLES_USUARIO.PROPIETARIO">3 - Propietario</option>
@@ -378,13 +385,13 @@ onMounted(async () => {
             </div>
             <div class="form-group flex-1">
               <label class="form-label">Sucursal Asignada</label>
-              <input
-                v-model.number="formCrear.sucursalId"
-                type="number"
-                min="1"
-                class="form-input"
-                placeholder="Ej: 1"
-              />
+              <select v-model="formCrear.sucursalId" class="form-select">
+                <option :value="null">Sin Asignar</option>
+                <option v-if="formCrear.rolId === ROLES_USUARIO.PROPIETARIO" :value="0">Todas las Sucursales (Propietario)</option>
+                <option v-for="suc in listaSucursales" :key="suc.sucursalId" :value="suc.sucursalId">
+                  {{ suc.codigoInterno }} ({{ suc.ciudad }})
+                </option>
+              </select>
             </div>
           </div>
 
@@ -420,7 +427,7 @@ onMounted(async () => {
               placeholder="Mínimo 6 caracteres"
               required
             />
-            <span class="form-hint">Spring Boot la hasheará con BCrypt antes de almacenarla en la BD.</span>
+            <span class="form-hint">Ingrese una contraseña segura de al menos 6 caracteres</span>
           </div>
 
           <div class="modal-footer">
@@ -451,7 +458,7 @@ onMounted(async () => {
         <div class="modal-header">
           <div>
             <h2 class="modal-title">Modificar Usuario: @{{ usuarioAEditar?.usuario }}</h2>
-            <p class="modal-subtitle">Invocará el procedimiento sp_usuarios_modificar</p>
+            <p class="modal-subtitle">Actualice los datos o el rol del usuario seleccionado</p>
           </div>
           <button type="button" class="btn-close-modal" @click="modalModificarVisible = false">×</button>
         </div>
@@ -471,7 +478,7 @@ onMounted(async () => {
           <div class="form-row">
             <div class="form-group flex-1">
               <label class="form-label">Rol Asignado</label>
-              <select v-model="formModificar.rolId" class="form-input" required>
+              <select v-model="formModificar.rolId" class="form-select" required @change="onRolChangeModificar">
                 <option :value="ROLES_USUARIO.CAJERO">1 - Cajero</option>
                 <option :value="ROLES_USUARIO.SUPERVISOR">2 - Supervisor</option>
                 <option :value="ROLES_USUARIO.PROPIETARIO">3 - Propietario</option>
@@ -479,13 +486,13 @@ onMounted(async () => {
             </div>
             <div class="form-group flex-1">
               <label class="form-label">Sucursal Asignada</label>
-              <input
-                v-model.number="formModificar.sucursalId"
-                type="number"
-                min="1"
-                class="form-input"
-                placeholder="ID Sucursal (vacío para central)"
-              />
+              <select v-model="formModificar.sucursalId" class="form-select">
+                <option :value="null">Sin Asignar</option>
+                <option v-if="formModificar.rolId === ROLES_USUARIO.PROPIETARIO" :value="0">Todas las Sucursales (Propietario)</option>
+                <option v-for="suc in listaSucursales" :key="suc.sucursalId" :value="suc.sucursalId">
+                  {{ suc.codigoInterno }} ({{ suc.ciudad }})
+                </option>
+              </select>
             </div>
           </div>
 
@@ -586,8 +593,7 @@ onMounted(async () => {
             <strong>@{{ usuarioABaja?.usuario }}</strong>?
           </p>
           <p class="confirm-note">
-            El usuario no será eliminado físicamente de la base de datos (se marcará
-            <code>marca_baja = true</code> invocando <code>sp_usuarios_eliminar</code>) para proteger la trazabilidad de ventas pasadas.
+            El usuario ya no podrá iniciar sesión en el sistema. Los registros históricos y transacciones se conservarán para fines de auditoría.
           </p>
         </div>
 

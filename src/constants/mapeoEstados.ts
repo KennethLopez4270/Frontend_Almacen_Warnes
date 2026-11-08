@@ -350,43 +350,94 @@ const ITEM_DESCONOCIDO: ConceptoItem = {
   border: '#CBD5E1'
 }
 
-export function getBadgeRol(rolId: number | null | undefined): ConceptoItem {
+// Paleta rotativa agradable para conceptos dinámicos creados en base de datos (ej. nuevas categorías)
+const PALETA_DINAMICA: Array<{ bg: string; text: string; border: string }> = [
+  { bg: '#ECFEFF', text: '#0E7490', border: '#A5F3FC' }, // Cyan
+  { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' }, // Naranja
+  { bg: '#FDF4FF', text: '#A21CAF', border: '#F0ABFC' }, // Fucsia
+  { bg: '#F0FDFA', text: '#0F766E', border: '#99F6E4' }, // Teal
+  { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' }, // Rosa
+  { bg: '#EEF2FF', text: '#4338CA', border: '#C7D2FE' }, // Indigo
+  { bg: '#FEFCE8', text: '#A16207', border: '#FEF08A' }, // Ámbar
+]
+
+function getEstiloDinamico(codigo: number): { bg: string; text: string; border: string } {
+  const indice = Math.abs(codigo - 1) % PALETA_DINAMICA.length
+  return PALETA_DINAMICA[indice] || PALETA_DINAMICA[0]!
+}
+
+export function getBadgeRol(rolId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!rolId) return ITEM_DESCONOCIDO
-  return MAPA_ROLES[rolId] || { ...ITEM_DESCONOCIDO, label: `Rol #${rolId}` }
+  const base = MAPA_ROLES[rolId]
+  if (base) {
+    return { ...base, label: descripcionDb || base.label }
+  }
+  const estilo = getEstiloDinamico(rolId)
+  return {
+    id: rolId,
+    codigo: rolId,
+    label: descripcionDb || `Rol #${rolId}`,
+    ...estilo
+  }
 }
 
-export function getBadgeCategoria(categoriaId: number | null | undefined): ConceptoItem {
+export function getBadgeCategoria(categoriaId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!categoriaId) return ITEM_DESCONOCIDO
-  return MAPA_CATEGORIAS[categoriaId] || { ...ITEM_DESCONOCIDO, label: `Categoría #${categoriaId}` }
+  const base = MAPA_CATEGORIAS[categoriaId]
+  if (base) {
+    return { ...base, label: descripcionDb || base.label }
+  }
+  const estilo = getEstiloDinamico(categoriaId)
+  return {
+    id: categoriaId,
+    codigo: categoriaId,
+    label: descripcionDb || `Categoría #${categoriaId}`,
+    ...estilo
+  }
 }
 
-export function getBadgeEstadoProducto(estadoId: number | null | undefined): ConceptoItem {
+export function getBadgeEstadoProducto(estadoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!estadoId) return ITEM_DESCONOCIDO
-  return MAPA_ESTADOS_PRODUCTO[estadoId] || { ...ITEM_DESCONOCIDO, label: `Estado #${estadoId}` }
+  const base = MAPA_ESTADOS_PRODUCTO[estadoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Estado #${estadoId}` }
 }
 
-export function getBadgeEstadoPendiente(estadoId: number | null | undefined): ConceptoItem {
+export function getBadgeEstadoPendiente(estadoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!estadoId) return ITEM_DESCONOCIDO
-  return MAPA_ESTADOS_SALA_ESPERA[estadoId] || { ...ITEM_DESCONOCIDO, label: `Estado #${estadoId}` }
+  const base = MAPA_ESTADOS_SALA_ESPERA[estadoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Estado #${estadoId}` }
 }
 
-export function getBadgeEstadoVenta(estadoId: number | null | undefined): ConceptoItem {
+export function getBadgeEstadoVenta(estadoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!estadoId) return ITEM_DESCONOCIDO
-  return MAPA_ESTADOS_VENTA[estadoId] || { ...ITEM_DESCONOCIDO, label: `Venta #${estadoId}` }
+  const base = MAPA_ESTADOS_VENTA[estadoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Venta #${estadoId}` }
 }
 
-export function getBadgeMetodoVenta(metodoId: number | null | undefined): ConceptoItem {
+export function getBadgeMetodoVenta(metodoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!metodoId) return ITEM_DESCONOCIDO
-  return MAPA_METODOS_VENTA[metodoId] || { ...ITEM_DESCONOCIDO, label: `Método #${metodoId}` }
+  const base = MAPA_METODOS_VENTA[metodoId]
+  if (base) {
+    return { ...base, label: descripcionDb || base.label }
+  }
+  const estilo = getEstiloDinamico(metodoId)
+  return {
+    id: metodoId,
+    codigo: metodoId,
+    label: descripcionDb || `Método #${metodoId}`,
+    ...estilo
+  }
 }
 
-export function getBadgeTipoMovimiento(tipoId: number | null | undefined): ConceptoItem {
+export function getBadgeTipoMovimiento(tipoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!tipoId) return ITEM_DESCONOCIDO
-  return MAPA_TIPOS_MOVIMIENTO[tipoId] || { ...ITEM_DESCONOCIDO, label: `Movimiento #${tipoId}` }
+  const base = MAPA_TIPOS_MOVIMIENTO[tipoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Movimiento #${tipoId}` }
 }
 
-export function getBadgeEstadoUsuario(estadoId: number | null | undefined): ConceptoItem {
+export function getBadgeEstadoUsuario(estadoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!estadoId) return ITEM_DESCONOCIDO
-  return MAPA_ESTADOS_USUARIO[estadoId] || { ...ITEM_DESCONOCIDO, label: `Estado #${estadoId}` }
+  const base = MAPA_ESTADOS_USUARIO[estadoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Estado #${estadoId}` }
 }
 

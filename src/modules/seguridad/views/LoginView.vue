@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 import {
   router,
@@ -19,6 +20,16 @@ import {
   volverALogin,
   cerrarSesionActiva,
 } from './LoginView'
+
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    if (authStore.sinSucursalAsignada || authStore.necesitaElegirSucursal) {
+      router.replace('/seleccionar-sucursal')
+    } else {
+      router.replace(authStore.isCajero ? '/pos' : '/dashboard')
+    }
+  }
+})
 </script>
 
 <template>
@@ -48,44 +59,10 @@ import {
 
       <!-- CARD PRINCIPAL -->
       <div class="login-card">
-        <!-- 1. CASO USUARIO YA AUTENTICADO -->
-        <div v-if="authStore.isAuthenticated" class="authenticated-box">
-          <div class="auth-user-badge">
-            <span class="status-indicator"></span>
-            Sesión Activa
-          </div>
-          <h2 class="auth-user-name">{{ authStore.nombreCompleto }}</h2>
-          <p class="auth-username">@{{ authStore.usuario }}</p>
-
-          <div class="auth-role-tag">
-            <ConceptoBadge tipo="rol" :valor="authStore.rolId" size="md" />
-          </div>
-
-          <div class="auth-actions">
-            <button
-              type="button"
-              class="btn-primary"
-              @click="router.push(authStore.isCajero ? '/pos' : '/dashboard')"
-            >
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-              Ir al Sistema
-            </button>
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="cerrarSesionActiva"
-            >
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              Cerrar Sesión
-            </button>
-          </div>
+        <!-- 1. CASO USUARIO YA AUTENTICADO: Redirigiendo automáticamente -->
+        <div v-if="authStore.isAuthenticated" class="authenticated-box" style="padding: 2.5rem 1.5rem; text-align: center;">
+          <div class="spinner-small" style="margin: 0 auto 1rem; border: 3px solid #e2e8f0; border-top-color: #2563eb; width: 28px; height: 28px; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <p style="color: #64748b; font-size: 0.9rem; font-weight: 500;">Sesión activa detectada. Ingresando al sistema...</p>
         </div>
 
         <!-- 2. MODO LOGIN -->
@@ -267,7 +244,7 @@ import {
       <div class="login-footer">
         <span>Tienda Warnes &copy; 2026</span>
         <span class="dot-separator">•</span>
-        <span>PostgreSQL + Spring Boot + Vue 3</span>
+        <span>Sistema de Gestión Integral ERP</span>
       </div>
     </div>
   </div>

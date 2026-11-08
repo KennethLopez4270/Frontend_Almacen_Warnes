@@ -9,13 +9,19 @@
 
 .inv-filter-panel,
 .prov-toolbar-card,
-.filter-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.875rem 1rem;
+.filter-card,
+.actions-toolbar {
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  padding: 0.875rem 1.15rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  box-shadow: var(--erp-shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .prov-filters-grid {
@@ -32,9 +38,9 @@
 }
 
 .prov-filter-label {
-  font-size: 0.785rem;
+  font-size: var(--erp-font-xs);
   font-weight: 600;
-  color: #475569;
+  color: var(--erp-text-secondary);
 }
 
 .prov-filter-actions {
@@ -44,18 +50,22 @@
 
 .inv-search-input-box,
 .prov-input-with-icon,
-.search-box {
+.search-box,
+.search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
+  max-width: 420px;
 }
 
 .inv-search-input-box .search-icon,
 .prov-icon-input,
-.search-box .search-icon {
+.search-box .search-icon,
+.search-input-wrapper .search-icon {
   position: absolute;
   left: 0.85rem;
-  color: #94a3b8;
+  color: var(--erp-text-subtle);
   pointer-events: none;
   width: 16px;
   height: 16px;
@@ -66,20 +76,23 @@
 .search-input {
   width: 100%;
   padding: 0.6rem 2.2rem 0.6rem 2.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #0f172a;
+  border: 1px solid var(--erp-border-input);
+  border-radius: var(--erp-radius-lg);
+  font-family: var(--erp-font-family);
+  font-size: var(--erp-font-base);
+  color: var(--erp-text-body);
   outline: none;
-  background-color: #ffffff;
-  transition: all 0.15s ease;
+  background-color: var(--erp-bg-card);
+  transition: var(--erp-transition-fast);
+  box-sizing: border-box;
 }
 
 .inv-search-input:focus,
 .prov-input-with-icon .prov-input:focus,
 .search-input:focus {
-  border-color: #0f172a;
-  background-color: #ffffff;
+  border-color: var(--erp-primary);
+  box-shadow: var(--erp-focus-ring);
+  background-color: var(--erp-bg-card);
 }
 
 .inv-search-clear,
@@ -88,7 +101,7 @@
   right: 0.75rem;
   border: none;
   background: transparent;
-  color: #94a3b8;
+  color: var(--erp-text-subtle);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -98,7 +111,7 @@
 
 .inv-search-clear:hover,
 .search-clear:hover {
-  color: #0f172a;
+  color: var(--erp-text-main);
 }
 
 /* Controles y selectores de filtros */
@@ -110,25 +123,32 @@
   flex-wrap: wrap;
 }
 
+.toolbar-right,
+.filter-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-left: auto;
+}
+
 .inv-filter-select,
-.prov-select,
-.filter-select {
-  padding: 0.45rem 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #334155;
-  background-color: #ffffff;
+.prov-select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--erp-border-input);
+  border-radius: var(--erp-radius-lg);
+  font-family: var(--erp-font-family);
+  font-size: var(--erp-font-base);
+  color: var(--erp-text-secondary);
+  background-color: var(--erp-bg-card);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: var(--erp-transition-fast);
 }
 
 .inv-filter-select:focus,
-.prov-select:focus,
-.filter-select:focus {
-  border-color: #0f172a;
-  background-color: #ffffff;
+.prov-select:focus {
+  border-color: var(--erp-primary);
+  box-shadow: var(--erp-focus-ring);
 }
 
 .inv-filter-toggle-btn {

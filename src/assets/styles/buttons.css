@@ -1,37 +1,56 @@
 /* ====================================================================
    ARQUITECTURA CSS COMPARTIDA: BOTONES
-   Molde visual exacto: InventarioView.css (Líneas 203-285, 1697-1715)
-   Selectores unificados para:
-   - InventarioView (.inv-btn-*)
-   - ProveedoresView (.prov-btn-*)
-   - UsuariosView (.btn-*)
+   Design System empresarial Tienda Warnes
    ==================================================================== */
 
-/* Boton Primario */
-.inv-btn-primary,
-.prov-btn-primary,
+/* Boton Primario (Azul Corporativo de Acción) */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  background-color: #0f172a;
+  background-color: var(--erp-primary);
   color: #ffffff;
-  border: 1px solid #0f172a;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid var(--erp-primary);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-base);
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: var(--erp-transition-fast);
+  line-height: 1.25;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--erp-primary-hover);
+  border-color: var(--erp-primary-hover);
+}
+
+/* Boton Dark / Slate (Sobrio / Inventario) */
+.inv-btn-primary,
+.prov-btn-primary,
+.btn-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background-color: var(--erp-dark);
+  color: #ffffff;
+  border: 1px solid var(--erp-dark);
+  border-radius: var(--erp-radius-md);
+  font-size: var(--erp-font-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--erp-transition-fast);
   line-height: 1.25;
 }
 
 .inv-btn-primary:hover:not(:disabled),
 .prov-btn-primary:hover:not(:disabled),
-.btn-primary:hover:not(:disabled) {
-  background-color: #1e293b;
-  border-color: #1e293b;
+.btn-dark:hover:not(:disabled) {
+  background-color: var(--erp-dark-hover);
+  border-color: var(--erp-dark-hover);
 }
 
 /* Boton Secundario */
@@ -43,23 +62,23 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  background-color: #ffffff;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  background-color: var(--erp-bg-card);
+  color: var(--erp-text-secondary);
+  border: 1px solid var(--erp-border-input);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-base);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--erp-transition-fast);
   line-height: 1.25;
 }
 
 .inv-btn-secondary:hover:not(:disabled),
 .prov-btn-secondary:hover:not(:disabled),
 .btn-secondary:hover:not(:disabled) {
-  background-color: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
+  background-color: var(--erp-bg-muted);
+  border-color: var(--erp-text-subtle);
+  color: var(--erp-text-main);
 }
 
 /* Boton Peligro / Danger */
@@ -71,22 +90,22 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  background-color: #991b1b;
+  background-color: var(--erp-danger);
   color: #ffffff;
-  border: 1px solid #991b1b;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid var(--erp-danger);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-base);
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: var(--erp-transition-fast);
   line-height: 1.25;
 }
 
 .inv-btn-danger:hover:not(:disabled),
 .prov-btn-danger:hover:not(:disabled),
 .btn-danger:hover:not(:disabled) {
-  background-color: #7f1d1d;
-  border-color: #7f1d1d;
+  background-color: var(--erp-danger-hover);
+  border-color: var(--erp-danger-hover);
 }
 
 /* Boton Advertencia / Warning */
@@ -98,22 +117,22 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  background-color: #ea580c;
+  background-color: var(--erp-warning);
   color: #ffffff;
-  border: 1px solid #ea580c;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid var(--erp-warning);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-base);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: var(--erp-transition-fast);
   line-height: 1.25;
 }
 
 .inv-btn-warning:hover:not(:disabled),
 .prov-btn-warning:hover:not(:disabled),
 .btn-warning:hover:not(:disabled) {
-  background-color: #c2410c;
-  border-color: #c2410c;
+  background-color: var(--erp-warning-hover);
+  border-color: var(--erp-warning-hover);
 }
 
 /* Estados Deshabilitados */

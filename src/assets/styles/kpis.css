@@ -19,12 +19,12 @@
 .inv-kpi-card,
 .prov-kpi-card,
 .kpi-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.15rem 1.25rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  padding: 1.25rem;
+  box-shadow: var(--erp-shadow-sm);
+  transition: var(--erp-transition-fast);
 }
 
 .inv-kpi-card,
@@ -40,15 +40,23 @@
   gap: 0.4rem;
 }
 
+/* Soporte para tarjetas KPI con icono lateral (ej. Configuración) */
+.kpi-card:has(.kpi-icon-box) {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
 .inv-kpi-card:hover,
 .prov-kpi-card:hover,
 .kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--erp-shadow-md);
 }
 
 .inv-kpi-info,
-.prov-kpi-info {
+.prov-kpi-info,
+.kpi-info {
   display: flex;
   flex-direction: column;
 }
@@ -62,9 +70,9 @@
 .inv-kpi-label,
 .prov-kpi-label,
 .kpi-label {
-  font-size: 0.775rem;
+  font-size: var(--erp-font-xs);
   font-weight: 600;
-  color: #475569;
+  color: var(--erp-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -72,9 +80,9 @@
 .inv-kpi-value,
 .prov-kpi-value,
 .kpi-value {
-  font-size: 1.65rem;
+  font-size: var(--erp-font-2xl);
   font-weight: 700;
-  color: #0f172a;
+  color: var(--erp-text-main);
   margin: 0.25rem 0 0.15rem;
   line-height: 1.1;
 }
@@ -82,54 +90,69 @@
 .inv-kpi-sub,
 .prov-kpi-sub,
 .kpi-desc {
-  font-size: 0.725rem;
-  color: #64748b;
+  font-size: var(--erp-font-xs);
+  color: var(--erp-text-muted);
 }
 
 .inv-kpi-icon-box,
-.prov-kpi-icon-box {
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-  background-color: #f1f5f9;
+.prov-kpi-icon-box,
+.kpi-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--erp-radius-lg);
+  background-color: var(--erp-bg-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #334155;
+  color: var(--erp-text-secondary);
   flex-shrink: 0;
 }
 
+.kpi-svg {
+  width: 24px;
+  height: 24px;
+}
+
 .inv-kpi-icon-box.amber,
-.prov-kpi-icon-box.amber {
-  background-color: #fffbeb;
-  color: #92400e;
+.prov-kpi-icon-box.amber,
+.kpi-icon-box.amber {
+  background-color: var(--erp-warning-bg);
+  color: var(--erp-warning);
 }
 
 .inv-kpi-icon-box.rose,
-.prov-kpi-icon-box.rose {
-  background-color: #fef2f2;
-  color: #991b1b;
+.prov-kpi-icon-box.rose,
+.kpi-icon-box.rose {
+  background-color: var(--erp-danger-bg);
+  color: var(--erp-danger);
 }
 
-.prov-kpi-icon-box.blue {
-  background-color: #f0f9ff;
-  color: #0284c7;
+.prov-kpi-icon-box.blue,
+.kpi-icon-box.blue {
+  background-color: var(--erp-primary-light);
+  color: var(--erp-primary);
 }
 
-.prov-kpi-icon-box.emerald {
-  background-color: #ecfdf5;
-  color: #059669;
+.prov-kpi-icon-box.emerald,
+.kpi-icon-box.green {
+  background-color: var(--erp-success-bg);
+  color: var(--erp-success);
+}
+
+.kpi-icon-box.purple {
+  background-color: #f5f3ff;
+  color: #7c3aed;
 }
 
 /* Modificadores de Alerta en KPIs */
 .inv-kpi-highlight-amber,
 .prov-kpi-card.prov-kpi-highlight-amber,
 .kpi-card-highlight {
-  border-color: #fde68a;
-  background-color: #fffbeb;
+  border-color: var(--erp-warning-border);
+  background-color: var(--erp-warning-bg);
 }
 
 .inv-kpi-highlight-rose {
-  border-color: #fecaca;
-  background-color: #fef2f2;
+  border-color: var(--erp-danger-border);
+  background-color: var(--erp-danger-bg);
 }

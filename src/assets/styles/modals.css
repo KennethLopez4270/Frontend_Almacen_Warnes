@@ -10,7 +10,8 @@
 /* Fondo oscurecido con desenfoque */
 .inv-modal-overlay,
 .prov-modal-backdrop,
-.modal-overlay {
+.modal-overlay,
+.modal-backdrop {
   position: fixed;
   inset: 0;
   top: 0;
@@ -18,28 +19,40 @@
   width: 100vw;
   height: 100vh;
   background-color: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 /* Contenedor principal del modal */
 .inv-modal-container,
 .prov-modal-container,
 .modal-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-2xl);
   width: 100%;
   max-width: 680px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--erp-shadow-modal);
   overflow: hidden;
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* Modificadores de tamaño de modal */
@@ -112,18 +125,19 @@
 .inv-modal-title,
 .prov-modal-title,
 .modal-title {
-  font-size: 1.05rem;
+  font-size: var(--erp-font-xl);
   font-weight: 700;
-  color: #0f172a;
+  color: var(--erp-text-main);
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .inv-modal-subtitle,
 .prov-modal-subtitle,
-.modal-subtitle {
-  font-size: 0.775rem;
-  color: #475569;
+.modal-subtitle,
+.modal-desc {
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-muted);
   margin-top: 0.15rem;
 }
 
@@ -225,24 +239,25 @@
 
 .inv-input,
 .prov-input,
-.form-input,
 .prov-textarea {
   width: 100%;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #0f172a;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--erp-border-input);
+  border-radius: var(--erp-radius-lg);
+  font-family: var(--erp-font-family);
+  font-size: var(--erp-font-base);
+  color: var(--erp-text-body);
   outline: none;
-  background-color: #ffffff;
-  transition: border-color 0.15s ease;
+  background-color: var(--erp-bg-card);
+  transition: var(--erp-transition-fast);
+  box-sizing: border-box;
 }
 
 .inv-input:focus,
 .prov-input:focus,
-.form-input:focus,
 .prov-textarea:focus {
-  border-color: #0f172a;
+  border-color: var(--erp-primary);
+  box-shadow: var(--erp-focus-ring);
 }
 
 /* Grillas de campos de formulario */

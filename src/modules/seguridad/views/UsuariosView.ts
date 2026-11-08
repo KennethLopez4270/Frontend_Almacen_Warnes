@@ -1,4 +1,4 @@
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import {
   ROLES_USUARIO,
   MAPA_ROLES,
@@ -14,6 +14,7 @@ import {
   type UsuarioModificarDTO,
   type RecuperarContrasenaDTO,
 } from '../services/seguridadService'
+import { sucursalService, type SucursalDTO } from '@/modules/configuracion/services/sucursalService'
 import { useAuthStore } from '@/stores/auth'
 
 export const authStore = useAuthStore()
@@ -25,6 +26,7 @@ export const authStore = useAuthStore()
 export const cargando = ref(false)
 export const usuarios = ref<UsuarioListadoDTO[]>([])
 export const usuariosActivosDetalle = ref<UsuarioDTO[]>([])
+export const listaSucursales = ref<SucursalDTO[]>([])
 
 // Filtros
 export const searchQuery = ref('')
@@ -70,10 +72,28 @@ export function extraerError(err: any): string {
 // 3. CARGA DE DATOS DESDE SPRING BOOT & POSTGRESQL
 // ====================================================================
 
+export async function cargarSucursalesDisponibles() {
+  try {
+    const data = await sucursalService.listar(false)
+    listaSucursales.value = data
+  } catch (err: any) {
+    console.warn('No se pudieron cargar sucursales:', err)
+  }
+}
+
+export function obtenerEtiquetaSucursal(sucursalId?: number | null): string {
+  if (sucursalId === 0) return 'Todas (Global)'
+  if (sucursalId === null || sucursalId === undefined) return 'Sin Asignar'
+  const suc = listaSucursales.value.find((s) => s.sucursalId === sucursalId)
+  if (suc) {
+    return `${suc.codigoInterno} (${suc.ciudad})`
+  }
+  return `Sucursal #${sucursalId}`
+}
+
 export async function cargarUsuarios() {
   cargando.value = true
   try {
-    // 1. Cargar la lista con filtros llamando a fn_usuarios_listar
     const rolParam = selectedRol.value !== '' ? Number(selectedRol.value) : null
     const sucursalParam = selectedSucursal.value !== '' ? Number(selectedSucursal.value) : null
     const busquedaParam = searchQuery.value.trim() !== '' ? searchQuery.value.trim() : undefined
@@ -136,16 +156,32 @@ export const formCrear = reactive<UsuarioRegistroDTO>({
 })
 export const cargandoCrear = ref(false)
 
+export function onRolChangeCrear() {
+  if (formCrear.rolId === ROLES_USUARIO.PROPIETARIO) {
+    formCrear.sucursalId = 0
+  } else if (formCrear.sucursalId === 0) {
+    formCrear.sucursalId = listaSucursales.value[0]?.sucursalId ?? null
+  }
+}
+
+export function onRolChangeModificar() {
+  if (formModificar.rolId === ROLES_USUARIO.PROPIETARIO) {
+    formModificar.sucursalId = 0
+  } else if (formModificar.sucursalId === 0) {
+    formModificar.sucursalId = listaSucursales.value[0]?.sucursalId ?? null
+  }
+}
+
 export function abrirModalCrear() {
   if (!authStore.isPropietario && authStore.rolId !== null) {
     agregarToast('Permiso Denegado', 'Solo el Propietario tiene autorización para crear usuarios.', 'warning')
     return
   }
   formCrear.usuario = ''
-  formCrear.sucursalId = null
+  formCrear.rolId = ROLES_USUARIO.CAJERO
+  formCrear.sucursalId = listaSucursales.value[0]?.sucursalId ?? null
   formCrear.nombres = ''
   formCrear.apellidos = ''
-  formCrear.rolId = ROLES_USUARIO.CAJERO
   formCrear.password = ''
   formCrear.usuarioCreacion = authStore.usuarioId || 1
   modalCrearVisible.value = true
@@ -159,9 +195,14 @@ export async function guardarNuevoUsuario() {
 
   cargandoCrear.value = true
   try {
+    const sucursalFinal =
+      formCrear.sucursalId !== null && formCrear.sucursalId !== undefined && (formCrear.sucursalId as any) !== ''
+        ? Number(formCrear.sucursalId)
+        : null
+
     const res = await seguridadService.registrarUsuario({
       usuario: formCrear.usuario.trim(),
-      sucursalId: formCrear.sucursalId ? Number(formCrear.sucursalId) : null,
+      sucursalId: sucursalFinal,
       nombres: formCrear.nombres.trim(),
       apellidos: formCrear.apellidos.trim(),
       rolId: Number(formCrear.rolId),
@@ -213,8 +254,13 @@ export async function guardarModificacion() {
 
   cargandoModificar.value = true
   try {
+    const sucursalFinal =
+      formModificar.sucursalId !== null && formModificar.sucursalId !== undefined && (formModificar.sucursalId as any) !== ''
+        ? Number(formModificar.sucursalId)
+        : null
+
     const res = await seguridadService.modificarUsuario(usuarioAEditar.value.usuarioId, {
-      sucursalId: formModificar.sucursalId ? Number(formModificar.sucursalId) : null,
+      sucursalId: sucursalFinal,
       nombres: formModificar.nombres.trim(),
       apellidos: formModificar.apellidos.trim(),
       rolId: Number(formModificar.rolId),
@@ -346,6 +392,6 @@ export function formatearFecha(fechaStr?: string | null): string {
 }
 
 export async function inicializarUsuarios() {
-  await cargarUsuarios()
+  await Promise.all([cargarUsuarios(), cargarSucursalesDisponibles()])
 }
 export { ROLES_USUARIO, MAPA_ROLES, ESTADOS_USUARIO, MAPA_ESTADOS_USUARIO }

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import {
   getBadgeRol,
+  getBadgeCategoria,
   getBadgeEstadoProducto,
   getBadgeEstadoPendiente,
   getBadgeEstadoVenta,
@@ -10,35 +11,73 @@ import {
   getBadgeEstadoUsuario,
   type ConceptoItem
 } from '@/constants/mapeoEstados'
+import { useConceptosStore } from '@/stores/conceptos'
 
 const props = defineProps<{
-  tipo: 'rol' | 'estado_producto' | 'estado_pendiente' | 'sala_espera' | 'estado_venta' | 'metodo_venta' | 'tipo_movimiento' | 'estado_usuario'
+  tipo:
+    | 'rol'
+    | 'categoria'
+    | 'estado_producto'
+    | 'estado_pendiente'
+    | 'sala_espera'
+    | 'estado_venta'
+    | 'metodo_venta'
+    | 'tipo_movimiento'
+    | 'estado_usuario'
   valor: number | null | undefined
+  label?: string
   size?: 'sm' | 'md' | 'lg'
 }>()
 
-const info = computed<ConceptoItem>(() => {
+let conceptosStore: ReturnType<typeof useConceptosStore> | null = null
+try {
+  conceptosStore = useConceptosStore()
+} catch {
+  // Fallback si se usa fuera de Pinia
+}
+
+const resolvedLabel = computed<string | undefined>(() => {
+  if (props.label) return props.label
+  if (!props.valor || !conceptosStore) return undefined
+
   switch (props.tipo) {
     case 'rol':
-      return getBadgeRol(props.valor)
+      return conceptosStore.getDescripcion(1, props.valor) || undefined
+    case 'categoria':
+      return conceptosStore.getDescripcion(2, props.valor) || undefined
+    case 'metodo_venta':
+      return conceptosStore.getDescripcion(4, props.valor) || undefined
+    default:
+      return undefined
+  }
+})
+
+const info = computed<ConceptoItem>(() => {
+  const lbl = resolvedLabel.value
+
+  switch (props.tipo) {
+    case 'rol':
+      return getBadgeRol(props.valor, lbl)
+    case 'categoria':
+      return getBadgeCategoria(props.valor, lbl)
     case 'estado_producto':
-      return getBadgeEstadoProducto(props.valor)
+      return getBadgeEstadoProducto(props.valor, lbl)
     case 'estado_pendiente':
     case 'sala_espera':
-      return getBadgeEstadoPendiente(props.valor)
+      return getBadgeEstadoPendiente(props.valor, lbl)
     case 'estado_venta':
-      return getBadgeEstadoVenta(props.valor)
+      return getBadgeEstadoVenta(props.valor, lbl)
     case 'metodo_venta':
-      return getBadgeMetodoVenta(props.valor)
+      return getBadgeMetodoVenta(props.valor, lbl)
     case 'tipo_movimiento':
-      return getBadgeTipoMovimiento(props.valor)
+      return getBadgeTipoMovimiento(props.valor, lbl)
     case 'estado_usuario':
-      return getBadgeEstadoUsuario(props.valor)
+      return getBadgeEstadoUsuario(props.valor, lbl)
     default:
       return {
         id: 0,
         codigo: 0,
-        label: 'No definido',
+        label: lbl || 'No definido',
         bg: '#F1F5F9',
         text: '#64748B',
         border: '#CBD5E1'
@@ -71,6 +110,12 @@ const info = computed<ConceptoItem>(() => {
   border-radius: 9999px;
   border: 1px solid transparent;
   line-height: 1.2;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.concepto-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .concepto-badge.sm {

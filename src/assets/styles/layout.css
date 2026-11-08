@@ -50,14 +50,22 @@
 .page-icon {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--erp-radius-lg);
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0f172a;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  color: var(--erp-text-main);
+  box-shadow: var(--erp-shadow-sm);
+  flex-shrink: 0;
+}
+
+.inv-page-icon svg,
+.prov-page-icon svg,
+.page-icon svg {
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 }
 

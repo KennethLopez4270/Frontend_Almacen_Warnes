@@ -2316,7 +2316,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           </div>
           <div>
             <h2 class="inv-modal-title">Registrar Nuevo Distribuidor</h2>
-            <p class="inv-modal-subtitle">Se guardará en la tabla proveedores mediante la función PostgreSQL spProveedorRegistrar</p>
+            <p class="inv-modal-subtitle">Complete los datos de contacto y comerciales del proveedor</p>
           </div>
           <button type="button" class="inv-btn-close" @click="cerrarModalCrearProveedor">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-sm">

@@ -50,9 +50,11 @@ export async function handleLogin() {
 
     mensajeExito.value = res.mensaje || 'Inicio de sesión exitoso.'
 
-    // Redirigir según rol o a dashboard después de un breve delay visual
+    // Redirigir según sucursal y rol después de un breve delay visual
     setTimeout(() => {
-      if (authStore.isCajero) {
+      if (authStore.sinSucursalAsignada || authStore.necesitaElegirSucursal) {
+        router.push('/seleccionar-sucursal')
+      } else if (authStore.isCajero) {
         router.push('/pos')
       } else {
         router.push('/dashboard')
