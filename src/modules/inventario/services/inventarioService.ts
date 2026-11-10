@@ -63,6 +63,8 @@ export interface InventarioLote {
   costo_unitario: number
   fechaVencimiento?: string | null
   fecha_vencimiento: string | null
+  proveedorId?: number | null
+  proveedor_id?: number | null
   nombreProveedor?: string
   nombre_proveedor: string
   diasParaVencer?: number | null
@@ -153,6 +155,30 @@ export interface InventarioPendiente {
   usuario_revision?: number | null
   nombreUsuarioRevision?: string | null
   nombre_usuario_revision?: string | null
+}
+
+export interface HistorialInventarioDTO {
+  historialId: number
+  sucursalId: number
+  codigoSucursal?: string
+  ciudadSucursal?: string
+  productoId: number
+  codigoInterno: string
+  codigoBarras: string
+  nombreProducto: string
+  loteId?: number | null
+  descripcionLote?: string | null
+  tipoMovimiento: number
+  nombreTipoMovimiento?: string
+  stockAnterior: number
+  cantidad: number
+  stockResultante: number
+  descripcion?: string | null
+  fechaCreacion: string
+  usuarioCreacion: number
+  nombreUsuarioCreacion?: string
+  usuarioAutorizacion?: number | null
+  nombreUsuarioAutorizacion?: string | null
 }
 
 export interface RegistroPendienteRequest {
@@ -603,6 +629,24 @@ export const inventarioService = {
     const response = await api.get<CodigoInternoResponse>('/codigo-interno', {
       params: { prefijo },
     })
+    return response.data
+  },
+
+  /**
+   * GET /historial
+   * Consulta el kardex histórico de movimientos de inventario
+   */
+  async listarHistorial(filtros?: {
+    sucursalId?: number | null
+    productoId?: number | null
+    tipoMovimiento?: number | null
+  }): Promise<HistorialInventarioDTO[]> {
+    const params: Record<string, any> = {}
+    if (filtros?.sucursalId) params.sucursalId = filtros.sucursalId
+    if (filtros?.productoId) params.productoId = filtros.productoId
+    if (filtros?.tipoMovimiento) params.tipoMovimiento = filtros.tipoMovimiento
+
+    const response = await api.get<HistorialInventarioDTO[]>('/historial', { params })
     return response.data
   },
 }

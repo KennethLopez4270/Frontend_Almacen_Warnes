@@ -34,13 +34,15 @@ export const useConceptosStore = defineStore('conceptos', () => {
   }
 
   /**
-   * Pre-carga los grupos principales más utilizados (Roles=1, Categorías=2, Métodos de Pago=4)
+   * Pre-carga los grupos principales más utilizados (Roles=1, Categorías=2, Métodos de Pago=4, Movimientos Caja=6, Movimientos Inventario=9)
    */
   async function precargarGruposPrincipales(): Promise<void> {
     await Promise.allSettled([
       cargarGrupo(1), // Roles de Usuario
       cargarGrupo(2), // Categorías de Productos
       cargarGrupo(4), // Métodos de Pago
+      cargarGrupo(6), // Tipos de Movimientos (Caja)
+      cargarGrupo(9), // Tipos de Movimientos (Inventario / Kardex)
     ])
   }
 

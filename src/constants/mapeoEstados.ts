@@ -234,7 +234,7 @@ export const TIPOS_MOVIMIENTO_CAJA = TIPOS_MOVIMIENTO
 
 export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
   [TIPOS_MOVIMIENTO.ENTRADA]: {
-    id: 23,
+    id: 25,
     codigo: 1,
     label: 'Entrada',
     bg: '#F0FDF4',
@@ -242,12 +242,49 @@ export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
     border: '#BBF7D0'
   },
   [TIPOS_MOVIMIENTO.SALIDA]: {
-    id: 24,
+    id: 26,
     codigo: 2,
     label: 'Salida',
     bg: '#FEF2F2',
     text: '#991B1B',
     border: '#FECACA'
+  }
+}
+
+// ====================================================================
+// 9. TIPOS DE MOVIMIENTO DE INVENTARIO (`tipo_movimiento` en historial_inventario / conceptos grupo 9)
+// ====================================================================
+
+export const TIPOS_MOVIMIENTO_INVENTARIO = {
+  INGRESO: 1,
+  EGRESO: 2,
+  AJUSTE: 3,
+} as const
+
+export const MAPA_TIPOS_MOVIMIENTO_INVENTARIO: Record<number, ConceptoItem> = {
+  [TIPOS_MOVIMIENTO_INVENTARIO.INGRESO]: {
+    id: 37,
+    codigo: 1,
+    label: 'Ingreso',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0'
+  },
+  [TIPOS_MOVIMIENTO_INVENTARIO.EGRESO]: {
+    id: 38,
+    codigo: 2,
+    label: 'Egreso',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA'
+  },
+  [TIPOS_MOVIMIENTO_INVENTARIO.AJUSTE]: {
+    id: 39,
+    codigo: 3,
+    label: 'Ajuste',
+    bg: '#EFF6FF',
+    text: '#1D4ED8',
+    border: '#BFDBFE'
   }
 }
 
@@ -432,6 +469,12 @@ export function getBadgeMetodoVenta(metodoId: number | null | undefined, descrip
 export function getBadgeTipoMovimiento(tipoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!tipoId) return ITEM_DESCONOCIDO
   const base = MAPA_TIPOS_MOVIMIENTO[tipoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Movimiento #${tipoId}` }
+}
+
+export function getBadgeTipoMovimientoInventario(tipoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
+  if (!tipoId) return ITEM_DESCONOCIDO
+  const base = MAPA_TIPOS_MOVIMIENTO_INVENTARIO[tipoId]
   return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Movimiento #${tipoId}` }
 }
 

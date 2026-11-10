@@ -55,9 +55,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isSupervisor = computed(() => rolId.value === ROLES_USUARIO.SUPERVISOR)
   const isCajero = computed(() => rolId.value === ROLES_USUARIO.CAJERO)
 
-  // Si el usuario en la BD tiene sucursal_id = NULL
+  // Si el usuario en la BD tiene sucursal_id = NULL o 0 (aplica a Cajero / Supervisor)
   const sinSucursalAsignada = computed(() => {
-    return isAuthenticated.value && sucursalOriginal.value === null
+    return isAuthenticated.value && !isPropietario.value && (sucursalOriginal.value === null || sucursalOriginal.value === 0)
   })
 
   // Si es propietario y aún no ha seleccionado una sucursal activa (> 0)

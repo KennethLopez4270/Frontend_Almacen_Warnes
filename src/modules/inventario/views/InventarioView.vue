@@ -10,7 +10,8 @@ import {
   selectedEstadoRegistro, onEstadoRegistroChange, reactivarItemInventario, darBajaProductoCatalogo, reactivarProductoCatalogo,
   modalConfirmacion, cerrarModalConfirmacion, ejecutarAccionConfirmacion,
   catalogoActivo, asegurarDatosActivosModal, alCambiarSucursalRecepcion,
-  listaSucursales, sucursalSeleccionadaId, sucursalActivaId, cambiarSucursalFiltro
+  listaSucursales, sucursalSeleccionadaId, sucursalActivaId, cambiarSucursalFiltro,
+  historialMovimientos, cargandoHistorial, filtroHistorialProducto, filtroHistorialTipo, busquedaHistorial, historialFiltrado, recargarHistorial
 } from './InventarioView'
 
 const sucursalActivaNombre = computed(() => {
@@ -278,6 +279,23 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
         <span>Catálogo de productos</span>
         <span class="inv-tab-counter font-mono">{{ productosCatalogo.length }}</span>
       </button>
+
+      <button
+        type="button"
+        class="inv-tab-btn"
+        :class="{ active: activeTab === 'kardex' }"
+        @click="activeTab = 'kardex'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-sm">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+        <span>Historial de Movimientos (Kardex)</span>
+        <span class="inv-tab-counter font-mono">{{ historialFiltrado.length }}</span>
+      </button>
     </nav>
 
     <!-- BARRA DE FILTROS Y BUSQUEDA GENERAL -->
@@ -288,12 +306,25 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          v-if="activeTab === 'kardex'"
+          v-model="busquedaHistorial"
+          type="text"
+          placeholder="Buscar en Kardex por producto, código, lote, descripción o usuario..."
+          class="inv-search-input"
+        />
+        <input
+          v-else
           v-model="searchQuery"
           type="text"
           placeholder="Buscar por Nombre, Código Interno o Código de Barras (soporta pistola lectora)..."
           class="inv-search-input"
         />
-        <button v-if="searchQuery" type="button" class="inv-search-clear" @click="searchQuery = ''">
+        <button
+          v-if="activeTab === 'kardex' ? busquedaHistorial : searchQuery"
+          type="button"
+          class="inv-search-clear"
+          @click="activeTab === 'kardex' ? (busquedaHistorial = '') : (searchQuery = '')"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inv-icon-xs">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -302,8 +333,25 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
       </div>
 
       <div class="inv-filter-controls">
+        <!-- Filtros específicos para Kardex -->
+        <template v-if="activeTab === 'kardex'">
+          <select v-model="filtroHistorialProducto" class="inv-filter-select" @change="recargarHistorial">
+            <option value="">Todos los Productos</option>
+            <option v-for="prod in productosCatalogo" :key="prod.producto_id" :value="prod.producto_id">
+              {{ prod.codigo_interno }} - {{ prod.nombre_producto }}
+            </option>
+          </select>
+
+          <select v-model="filtroHistorialTipo" class="inv-filter-select" @change="recargarHistorial">
+            <option value="">Todos los Tipos de Movimiento</option>
+            <option :value="1">Ingreso</option>
+            <option :value="2">Egreso</option>
+            <option :value="3">Ajuste</option>
+          </select>
+        </template>
+
         <!-- Filtro Categoria -->
-        <select v-model="selectedCategoria" class="inv-filter-select">
+        <select v-if="activeTab !== 'kardex'" v-model="selectedCategoria" class="inv-filter-select">
           <option value="">Todas las Categorías</option>
           <option v-for="cat in listaCategorias" :key="cat.codigo" :value="cat.codigo">
             {{ cat.nombreCategoria || cat.descripcion || cat.nombre_categoria }}
@@ -319,7 +367,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
         </select>
 
         <!-- Filtro Estado Producto (en stock o catálogo) -->
-        <select v-if="activeTab !== 'espera'" v-model="selectedEstadoProducto" class="inv-filter-select">
+        <select v-if="activeTab !== 'espera' && activeTab !== 'kardex'" v-model="selectedEstadoProducto" class="inv-filter-select">
           <option value="">Todos los Estados</option>
           <option :value="1">Activo</option>
           <option :value="2">Descontinuado</option>
@@ -328,7 +376,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
 
         <!-- Filtro Estado de Registro (Soft Delete) -->
         <select
-          v-if="activeTab !== 'espera'"
+          v-if="activeTab !== 'espera' && activeTab !== 'kardex'"
           v-model="selectedEstadoRegistro"
           class="inv-filter-select"
           @change="onEstadoRegistroChange"
@@ -452,7 +500,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
 
         <!-- Boton Reset Filtros -->
         <button
-          v-if="searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer || filterEnOferta || selectedEstadoRegistro !== 'ACTIVOS'"
+          v-if="activeTab !== 'kardex' && (searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer || filterEnOferta || selectedEstadoRegistro !== 'ACTIVOS')"
           type="button"
           class="inv-btn-reset-filters"
           @click="resetFiltros"
@@ -1098,6 +1146,130 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                       </button>
                     </template>
                   </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- ============================================================= -->
+    <!-- TAB 4: HISTORIAL DE MOVIMIENTOS (KARDEX DE STOCK) -->
+    <!-- ============================================================= -->
+    <main v-if="activeTab === 'kardex'" class="inv-tab-content">
+      <div class="inv-table-card">
+        <div class="inv-table-responsive">
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th style="width: 140px">Fecha y Hora</th>
+                <th style="width: 110px">Sucursal</th>
+                <th>Producto / Código</th>
+                <th>Lote</th>
+                <th class="text-center" style="width: 120px">Tipo Mov.</th>
+                <th class="text-center" style="width: 170px">Flujo de Stock</th>
+                <th>Descripción / Motivo</th>
+                <th style="width: 150px">Registrado por</th>
+                <th style="width: 150px">Autorizado por</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="cargandoHistorial">
+                <td colspan="9" class="inv-table-loading">
+                  Cargando historial de movimientos (Kardex)...
+                </td>
+              </tr>
+              <tr v-else-if="historialFiltrado.length === 0">
+                <td colspan="9" class="inv-table-empty">
+                  No se encontraron movimientos registrados en el Kardex.
+                </td>
+              </tr>
+              <tr v-else v-for="item in historialFiltrado" :key="item.historialId">
+                <!-- Fecha y Hora -->
+                <td class="font-mono text-sm text-muted">
+                  {{ formatearFechaHora(item.fechaCreacion) }}
+                </td>
+
+                <!-- Sucursal -->
+                <td>
+                  <span class="inv-badge-branch" :title="item.ciudadSucursal || ''">
+                    {{ item.codigoSucursal || 'SUC-001' }}
+                  </span>
+                </td>
+
+                <!-- Producto / Código -->
+                <td>
+                  <div class="inv-cell-product">
+                    <span class="inv-product-name">{{ item.nombreProducto }}</span>
+                    <span class="inv-product-subtext font-mono">
+                      {{ item.codigoInterno }}
+                      <template v-if="item.codigoBarras"> / {{ item.codigoBarras }}</template>
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Lote -->
+                <td>
+                  <span v-if="item.descripcionLote" class="inv-badge-lote">
+                    {{ item.descripcionLote }}
+                  </span>
+                  <span v-else class="text-muted text-xs">
+                    Sin lote asociado
+                  </span>
+                </td>
+
+                <!-- Tipo Movimiento Badge -->
+                <td class="text-center">
+                  <ConceptoBadge
+                    tipo="tipo_movimiento_inventario"
+                    :valor="item.tipoMovimiento"
+                    :label="item.nombreTipoMovimiento"
+                    size="sm"
+                  />
+                </td>
+
+                <!-- Flujo de Stock: Anterior -> Cantidad -> Resultante -->
+                <td class="text-center">
+                  <div class="kardex-stock-flow">
+                    <span class="kardex-stock-prev" title="Stock anterior">{{ item.stockAnterior }}</span>
+                    <span
+                      class="kardex-stock-diff font-mono"
+                      :class="{
+                        'diff-positive': item.tipoMovimiento === 1,
+                        'diff-negative': item.tipoMovimiento === 2,
+                        'diff-adjust': item.tipoMovimiento === 3
+                      }"
+                      :title="'Cantidad: ' + item.cantidad"
+                    >
+                      {{ item.tipoMovimiento === 1 ? '+' : (item.tipoMovimiento === 2 ? '-' : (item.stockResultante >= item.stockAnterior ? '+' : '')) }}{{ item.tipoMovimiento === 3 ? (item.stockResultante - item.stockAnterior) : item.cantidad }}
+                    </span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="kardex-flow-arrow">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                    <span class="kardex-stock-result font-bold" title="Stock resultante">{{ item.stockResultante }} u.</span>
+                  </div>
+                </td>
+
+                <!-- Descripción / Motivo -->
+                <td>
+                  <span class="text-sm">{{ item.descripcion || 'Sin descripción' }}</span>
+                </td>
+
+                <!-- Registrado por -->
+                <td>
+                  <span class="inv-badge-user" :title="'ID: ' + item.usuarioCreacion">
+                    {{ item.nombreUsuarioCreacion || 'Usuario #' + item.usuarioCreacion }}
+                  </span>
+                </td>
+
+                <!-- Autorizado por -->
+                <td>
+                  <span v-if="item.nombreUsuarioAutorizacion" class="inv-badge-authorizer" :title="'ID: ' + item.usuarioAutorizacion">
+                    {{ item.nombreUsuarioAutorizacion }}
+                  </span>
+                  <span v-else class="text-muted text-xs">-</span>
                 </td>
               </tr>
             </tbody>

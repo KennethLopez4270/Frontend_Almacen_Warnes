@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { cargando, titulo, moduloBadge } from './KardexView'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+onMounted(() => {
+  router.replace({ path: '/inventario', query: { tab: 'kardex' } })
+})
 </script>
 
 <template>
   <div class="view-container">
     <div class="view-card">
       <span class="badge">Auditoría de Stock</span>
-      <h1>Kardex Físico y Valorado</h1>
-      <p>Historial y registro de movimientos de entradas y salidas de mercadería.</p>
+      <h1>Redirigiendo a Historial de Movimientos (Kardex)...</h1>
+      <p>Cargando módulo integral de inventario y trazabilidad de movimientos de stock.</p>
     </div>
   </div>
 </template>

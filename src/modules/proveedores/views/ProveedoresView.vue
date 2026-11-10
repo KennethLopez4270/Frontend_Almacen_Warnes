@@ -314,7 +314,7 @@ onMounted(async () => {
                 <div class="prov-contact-cell">
                   <span class="prov-contact-name">{{ prov.nombreContacto }}</span>
                   <span class="prov-contact-phone font-mono">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-nano">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-nano">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                     </svg>
                     {{ prov.numeroContacto }}
@@ -431,17 +431,17 @@ onMounted(async () => {
     <div v-if="modalAbmVisible" class="prov-modal-backdrop" @click.self="cerrarModalAbm">
       <div class="prov-modal-container">
         <div class="prov-modal-header">
-          <div class="prov-modal-title-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
+          <div class="prov-modal-header-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
               <rect x="1" y="3" width="15" height="13" />
-              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+              <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
               <circle cx="5.5" cy="18.5" r="2.5" />
               <circle cx="18.5" cy="18.5" r="2.5" />
             </svg>
-            <div>
-              <h2 class="prov-modal-title">{{ modoEdicion ? 'Editar Distribuidor' : 'Registrar Nuevo Distribuidor' }}</h2>
-              <p class="prov-modal-subtitle">Estructura adaptada al esquema original de la base de datos</p>
-            </div>
+          </div>
+          <div class="prov-modal-title-text">
+            <h2 class="prov-modal-title">{{ modoEdicion ? 'Editar Distribuidor' : 'Registrar Nuevo Distribuidor' }}</h2>
+            <p class="prov-modal-subtitle">Estructura adaptada al esquema original de la base de datos</p>
           </div>
           <button type="button" class="prov-modal-close" @click="cerrarModalAbm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
@@ -563,17 +563,17 @@ onMounted(async () => {
     <!-- MODAL DE CONFIRMACIÓN DE BAJA -->
     <div v-if="modalBajaVisible" class="prov-modal-backdrop" @click.self="cerrarModalBaja">
       <div class="prov-modal-container sm">
-        <div class="prov-modal-header">
-          <div class="prov-modal-title-box danger">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
+        <div class="prov-modal-header danger">
+          <div class="prov-modal-header-icon danger">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <div>
-              <h2 class="prov-modal-title">Confirmar Baja de Distribuidor</h2>
-              <p class="prov-modal-subtitle">Se aplicará baja lógica (marca_baja = true)</p>
-            </div>
+          </div>
+          <div class="prov-modal-title-text">
+            <h2 class="prov-modal-title">Confirmar Baja de Distribuidor</h2>
+            <p class="prov-modal-subtitle">Se aplicará baja lógica (marca_baja = true)</p>
           </div>
           <button type="button" class="prov-modal-close" @click="cerrarModalBaja">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
@@ -616,16 +616,16 @@ onMounted(async () => {
     <!-- MODAL DE CONFIRMACIÓN DE REACTIVACIÓN -->
     <div v-if="modalReactivarVisible" class="prov-modal-backdrop" @click.self="cerrarModalReactivar">
       <div class="prov-modal-container sm">
-        <div class="prov-modal-header">
-          <div class="prov-modal-title-box success">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
+        <div class="prov-modal-header success">
+          <div class="prov-modal-header-icon success">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
               <path d="M3 3v5h5" />
             </svg>
-            <div>
-              <h2 class="prov-modal-title">Reactivar Distribuidor</h2>
-              <p class="prov-modal-subtitle">Se revertirá la baja lógica (marca_baja = false)</p>
-            </div>
+          </div>
+          <div class="prov-modal-title-text">
+            <h2 class="prov-modal-title">Reactivar Distribuidor</h2>
+            <p class="prov-modal-subtitle">Se revertirá la baja lógica (marca_baja = false)</p>
           </div>
           <button type="button" class="prov-modal-close" @click="cerrarModalReactivar" :disabled="reactivando">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
@@ -669,20 +669,27 @@ onMounted(async () => {
       <div class="prov-modal-container xl">
         <!-- Cabecera de la Ficha -->
         <div class="prov-modal-header">
-          <div class="prov-modal-title-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-md">
+          <div class="prov-modal-header-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
               <line x1="16" y1="17" x2="8" y2="17" />
               <polyline points="10 9 9 9 8 9" />
             </svg>
-            <div>
-              <h2 class="prov-modal-title">Ficha Logística: {{ proveedorSeleccionado?.nombreEmpresa }}</h2>
-              <p class="prov-modal-subtitle">
-                Contacto: {{ proveedorSeleccionado?.nombreContacto }} (Tel: {{ proveedorSeleccionado?.numeroContacto }})
-              </p>
-            </div>
+          </div>
+          <div class="prov-modal-title-text">
+            <h2 class="prov-modal-title">Ficha Logística: {{ proveedorSeleccionado?.nombreEmpresa }}</h2>
+            <p class="prov-modal-subtitle">
+              <span>Contacto: <strong>{{ proveedorSeleccionado?.nombreContacto || 'Sin contacto' }}</strong></span>
+              <span v-if="proveedorSeleccionado?.numeroContacto" class="prov-contact-phone-inline">
+                •
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-nano">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                {{ proveedorSeleccionado?.numeroContacto }}
+              </span>
+            </p>
           </div>
           <button type="button" class="prov-modal-close" @click="modalFichaVisible = false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
@@ -715,7 +722,7 @@ onMounted(async () => {
               :class="{ active: pestanaActivaFicha === 'catalogo' }"
               @click="pestanaActivaFicha = 'catalogo'"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-xs">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
               </svg>
@@ -729,7 +736,7 @@ onMounted(async () => {
               :class="{ active: pestanaActivaFicha === 'lotes' }"
               @click="pestanaActivaFicha = 'lotes'"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-xs">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="prov-icon-sm">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               </svg>
               <span>2. Verificación de Lotes y Caducidad</span>

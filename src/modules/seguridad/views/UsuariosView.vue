@@ -207,6 +207,7 @@ onMounted(async () => {
         <div class="select-wrapper">
           <select v-model="selectedSucursal" class="filter-select" @change="cargarUsuarios">
             <option value="">Todas las Sucursales</option>
+            <option :value="0">Todas (Global / Propietario)</option>
             <option v-for="suc in listaSucursales" :key="suc.sucursalId" :value="suc.sucursalId">
               {{ suc.codigoInterno }} - {{ suc.ciudad }}
             </option>

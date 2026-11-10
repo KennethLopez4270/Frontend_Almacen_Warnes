@@ -225,6 +225,8 @@
   transition: var(--erp-transition-fast);
 }
 
+.inv-btn-action svg,
+.prov-btn-action svg,
 .action-btn svg,
 .btn-action svg,
 .action-icon {
