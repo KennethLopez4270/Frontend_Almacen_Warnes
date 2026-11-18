@@ -13,7 +13,7 @@ onMounted(() => {
   <div class="view-container">
     <div class="view-card">
       <span class="badge">Auditoría de Stock</span>
-      <h1>Redirigiendo a Historial de Movimientos (Kardex)...</h1>
+      <h1>Redirigiendo a Historial de Movimientos...</h1>
       <p>Cargando módulo integral de inventario y trazabilidad de movimientos de stock.</p>
     </div>
   </div>

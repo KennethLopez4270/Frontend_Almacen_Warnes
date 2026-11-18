@@ -10,6 +10,7 @@ import {
   getBadgeTipoMovimiento,
   getBadgeTipoMovimientoInventario,
   getBadgeEstadoUsuario,
+  getBadgeTipoNotificacion,
   type ConceptoItem
 } from '@/constants/mapeoEstados'
 import { useConceptosStore } from '@/stores/conceptos'
@@ -26,6 +27,7 @@ const props = defineProps<{
     | 'tipo_movimiento'
     | 'tipo_movimiento_inventario'
     | 'estado_usuario'
+    | 'tipo_notificacion'
   valor: number | null | undefined
   label?: string
   size?: 'sm' | 'md' | 'lg'
@@ -53,6 +55,8 @@ const resolvedLabel = computed<string | undefined>(() => {
       return conceptosStore.getDescripcion(6, props.valor) || undefined
     case 'tipo_movimiento_inventario':
       return conceptosStore.getDescripcion(9, props.valor) || undefined
+    case 'tipo_notificacion':
+      return conceptosStore.getDescripcion(10, props.valor) || undefined
     default:
       return undefined
   }
@@ -81,6 +85,8 @@ const info = computed<ConceptoItem>(() => {
       return getBadgeTipoMovimientoInventario(props.valor, lbl)
     case 'estado_usuario':
       return getBadgeEstadoUsuario(props.valor, lbl)
+    case 'tipo_notificacion':
+      return getBadgeTipoNotificacion(props.valor, lbl)
     default:
       return {
         id: 0,

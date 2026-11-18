@@ -1,6 +1,7 @@
 import { ref, reactive } from 'vue'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth'
+import { notificacionesService } from '@/services/notificacionesService'
 
 export { router }
 export const authStore = useAuthStore()
@@ -83,6 +84,16 @@ export async function handleSolicitarRecuperacion() {
     mensajeRecuperacion.value =
       res.mensaje ||
       'Solicitud enviada exitosamente. El propietario revisará su caso para asignarle una nueva contraseña.'
+
+    try {
+      await notificacionesService.crearNotificacion({
+        rolDestino: 3,
+        tipoNotificacion: 7,
+        tituloAlerta: 'Solicitud de Recuperación de Contraseña',
+        mensajeAlerta: `El usuario @${formRecuperar.usuario.trim()} ha solicitado el restablecimiento de su contraseña.`,
+        direccion: '/admin/usuarios',
+      })
+    } catch (_) {}
   } catch (err: any) {
     mensajeError.value =
       err.userMessage || 'No se pudo enviar la solicitud de recuperación.'

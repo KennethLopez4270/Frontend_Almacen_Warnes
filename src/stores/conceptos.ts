@@ -34,7 +34,7 @@ export const useConceptosStore = defineStore('conceptos', () => {
   }
 
   /**
-   * Pre-carga los grupos principales más utilizados (Roles=1, Categorías=2, Métodos de Pago=4, Movimientos Caja=6, Movimientos Inventario=9)
+   * Pre-carga los grupos principales más utilizados (Roles=1, Categorías=2, Métodos de Pago=4, Movimientos Caja=6, Movimientos Inventario=9, Notificaciones=10)
    */
   async function precargarGruposPrincipales(): Promise<void> {
     await Promise.allSettled([
@@ -43,6 +43,7 @@ export const useConceptosStore = defineStore('conceptos', () => {
       cargarGrupo(4), // Métodos de Pago
       cargarGrupo(6), // Tipos de Movimientos (Caja)
       cargarGrupo(9), // Tipos de Movimientos (Inventario / Kardex)
+      cargarGrupo(10), // Tipos de Notificación
     ])
   }
 
@@ -86,6 +87,7 @@ export const useConceptosStore = defineStore('conceptos', () => {
   const categorias = computed(() => cacheGrupos.value[2] || [])
   const roles = computed(() => cacheGrupos.value[1] || [])
   const metodosPago = computed(() => cacheGrupos.value[4] || [])
+  const tiposNotificacion = computed(() => cacheGrupos.value[10] || [])
 
   return {
     cacheGrupos,
@@ -94,6 +96,7 @@ export const useConceptosStore = defineStore('conceptos', () => {
     categorias,
     roles,
     metodosPago,
+    tiposNotificacion,
     cargarGrupo,
     precargarGruposPrincipales,
     agregarConcepto,

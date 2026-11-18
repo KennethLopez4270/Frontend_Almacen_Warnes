@@ -62,6 +62,15 @@ const routes: RouteRecordRaw[] = [
     name: 'Configuracion',
     component: () => import('@/modules/configuracion/views/ConfiguracionView.vue'),
   },
+  {
+    path: '/notificaciones',
+    name: 'Notificaciones',
+    component: () => import('@/modules/notificaciones/views/NotificacionesView.vue'),
+  },
+  {
+    path: '/usuarios',
+    redirect: '/admin/usuarios',
+  },
 ]
 
 const router = createRouter({
@@ -107,6 +116,7 @@ router.beforeEach((to, _from, next) => {
       '/dashboard',
       '/admin/usuarios',
       '/admin/configuracion',
+      '/notificaciones',
     ]
 
     const esRutaPermitida = rutasPermitidasSinSucursal.some((r) => to.path === r || to.path.startsWith('/admin'))
@@ -116,10 +126,18 @@ router.beforeEach((to, _from, next) => {
     return next()
   }
 
-  // 5. Restricción por Roles (Cajero o Supervisor intentando entrar a Administración)
-  if (to.path.startsWith('/admin') || to.path === '/dashboard') {
+  // 5. Restricción por Roles
+  // /admin (Usuarios y Configuración) es exclusivo del Propietario
+  if (to.path.startsWith('/admin')) {
     if (!authStore.isPropietario) {
       return next(authStore.isCajero ? '/pos' : '/inventario')
+    }
+  }
+
+  // /dashboard accesible por Propietario y Supervisor (con control de autorización por backend)
+  if (to.path === '/dashboard') {
+    if (authStore.isCajero) {
+      return next('/pos')
     }
   }
 

@@ -1,11 +1,14 @@
 import axios from 'axios'
+import { API_URL, URL_BASE } from '@/config/api'
+
+export { API_URL, URL_BASE }
 
 /**
  * Cliente HTTP Axios configurado para comunicar el Frontend con el Backend
- * en Spring Boot expuesto en http://localhost:8080/api/inventario
+ * en Spring Boot bajo la URL centralizada /api/inventario
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/inventario',
+  baseURL: `${API_URL}/inventario`,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -13,10 +16,18 @@ const api = axios.create({
   timeout: 15000,
 })
 
+// Inyectar token JWT automáticamente
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('tw_jwt_token')
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 /**
  * Interceptor de respuesta para capturar y normalizar errores de la base de datos
  * y excepciones de Spring Boot (ej: RAISE EXCEPTION, 400 Bad Request, 409 Conflict).
- * Extrae el campo exacto 'mensaje' enviado por InventarioExceptionHandler.
  */
 api.interceptors.response.use(
   (response) => response,
@@ -31,7 +42,7 @@ api.interceptors.response.use(
         cleanMessage = data
       }
     } else if (error.request) {
-      cleanMessage = 'No se pudo conectar con el servidor (backend inalcanzable en http://localhost:8080).'
+      cleanMessage = `No se pudo conectar con el servidor (backend inalcanzable en ${URL_BASE}).`
     } else if (error.message) {
       cleanMessage = error.message
     }
@@ -44,4 +55,3 @@ api.interceptors.response.use(
 )
 
 export default api
-

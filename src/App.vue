@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppSidebar from '@/components/common/AppSidebar.vue'
+import AppHeader from '@/components/common/AppHeader.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -20,6 +21,8 @@ const showSidebar = computed(() => {
 
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-wrapper" :class="{ 'with-sidebar-offset': showSidebar }">
+      <AppHeader v-if="showSidebar" />
+
       <main class="app-main">
         <RouterView />
       </main>

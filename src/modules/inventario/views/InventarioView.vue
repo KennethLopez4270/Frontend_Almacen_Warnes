@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 import CustomSelect from '@/components/common/CustomSelect.vue'
 import {
@@ -25,9 +26,23 @@ const sucursalActivaNombre = computed(() => {
   return `${codigo} - ${nombre}`
 })
 
+const route = useRoute()
+
 onMounted(async () => {
   await inicializarInventario()
 })
+
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab === 'pendientes' || newTab === 'espera') {
+      activeTab.value = 'espera'
+    } else if (newTab && ['stock', 'catalogo', 'kardex'].includes(newTab as string)) {
+      activeTab.value = newTab as 'stock' | 'espera' | 'catalogo' | 'kardex'
+    }
+  },
+  { immediate: true }
+)
 
 watch(usuarioActivoId, async (nuevoId, anteriorId) => {
   if (nuevoId && nuevoId !== anteriorId) {
@@ -50,7 +65,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
             </svg>
           </div>
           <div>
-            <h1 class="inv-page-title">Gestión de Inventario y Recepción por Lotes</h1>
+            <h1 class="inv-page-title">Gestión de Inventario</h1>
             <p class="inv-page-subtitle">Control de stock real, trazabilidad de vencimientos y auditoría en Sala de Espera</p>
           </div>
         </div>
@@ -293,7 +308,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           <line x1="16" y1="17" x2="8" y2="17" />
           <polyline points="10 9 9 9 8 9" />
         </svg>
-        <span>Historial de Movimientos (Kardex)</span>
+        <span>Historial de Movimientos</span>
         <span class="inv-tab-counter font-mono">{{ historialFiltrado.length }}</span>
       </button>
     </nav>
@@ -309,7 +324,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           v-if="activeTab === 'kardex'"
           v-model="busquedaHistorial"
           type="text"
-          placeholder="Buscar en Kardex por producto, código, lote, descripción o usuario..."
+          placeholder="Buscar en el historial por producto, código, descripción o usuario..."
           class="inv-search-input"
         />
         <input
@@ -1166,7 +1181,6 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                 <th style="width: 140px">Fecha y Hora</th>
                 <th style="width: 110px">Sucursal</th>
                 <th>Producto / Código</th>
-                <th>Lote</th>
                 <th class="text-center" style="width: 120px">Tipo Mov.</th>
                 <th class="text-center" style="width: 170px">Flujo de Stock</th>
                 <th>Descripción / Motivo</th>
@@ -1176,13 +1190,13 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
             </thead>
             <tbody>
               <tr v-if="cargandoHistorial">
-                <td colspan="9" class="inv-table-loading">
-                  Cargando historial de movimientos (Kardex)...
+                <td colspan="8" class="inv-table-loading">
+                  Cargando historial de movimientos...
                 </td>
               </tr>
               <tr v-else-if="historialFiltrado.length === 0">
-                <td colspan="9" class="inv-table-empty">
-                  No se encontraron movimientos registrados en el Kardex.
+                <td colspan="8" class="inv-table-empty">
+                  No se encontraron movimientos registrados en el historial.
                 </td>
               </tr>
               <tr v-else v-for="item in historialFiltrado" :key="item.historialId">
@@ -1207,16 +1221,6 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
                       <template v-if="item.codigoBarras"> / {{ item.codigoBarras }}</template>
                     </span>
                   </div>
-                </td>
-
-                <!-- Lote -->
-                <td>
-                  <span v-if="item.descripcionLote" class="inv-badge-lote">
-                    {{ item.descripcionLote }}
-                  </span>
-                  <span v-else class="text-muted text-xs">
-                    Sin lote asociado
-                  </span>
                 </td>
 
                 <!-- Tipo Movimiento Badge -->

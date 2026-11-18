@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { API_URL, URL_BASE } from '@/config/api'
 
 // Cliente Axios dedicado para la API de Proveedores
 const apiProveedores = axios.create({
-  baseURL: import.meta.env.VITE_API_PROVEEDORES_URL || 'http://localhost:8080/api/proveedores',
+  baseURL: `${API_URL}/proveedores`,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -24,7 +25,7 @@ apiProveedores.interceptors.response.use(
         cleanMessage = data
       }
     } else if (error.request) {
-      cleanMessage = 'No se pudo conectar con el servidor (backend inalcanzable en http://localhost:8080).'
+      cleanMessage = `No se pudo conectar con el servidor (backend inalcanzable en ${URL_BASE}).`
     } else if (error.message) {
       cleanMessage = error.message
     }

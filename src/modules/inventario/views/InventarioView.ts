@@ -28,6 +28,7 @@ import {
 } from '@/modules/inventario/services/inventarioService'
 import { proveedorService } from '@/modules/proveedores/services/proveedorService'
 import { useUsuarioActivo } from '@/composables/useUsuarioActivo'
+import { useNotificacionesStore } from '@/stores/notificaciones'
 
 // ====================================================================
 // 1. CONSTANTES Y TABLA PARAMETRICA CONCEPTOS (MAPEO 1:1 BD)
@@ -472,7 +473,6 @@ export const historialFiltrado = computed(() => {
         (h.codigoInterno && h.codigoInterno.toLowerCase().includes(q)) ||
         (h.codigoBarras && h.codigoBarras.toLowerCase().includes(q)) ||
         (h.descripcion && h.descripcion.toLowerCase().includes(q)) ||
-        (h.descripcionLote && h.descripcionLote.toLowerCase().includes(q)) ||
         (h.nombreUsuarioCreacion && h.nombreUsuarioCreacion.toLowerCase().includes(q)) ||
         (h.nombreUsuarioAutorizacion && h.nombreUsuarioAutorizacion.toLowerCase().includes(q))
       )
@@ -939,9 +939,26 @@ export async function ejecutarDescuentoUnidades() {
     agregarToast('Validación', 'La cantidad a descontar debe ser un número entero positivo mayor a 0.', 'warning')
     return
   }
-  if (cant > stockDisp) {
-    agregarToast('Validación', `La cantidad a descontar (${cant} u.) supera el stock disponible en este lote (${stockDisp} u.).`, 'warning')
-    return
+
+  // 1. Verificación en tiempo real mediante fn_notificaciones_verificar_stock_venta (Criterio 1)
+  const notificacionesStore = useNotificacionesStore()
+  const prodId = itemDescontarActivo.value.producto_id || (itemDescontarActivo.value as any).productoId || 1
+  const sucId = itemDescontarActivo.value.sucursal_id || (itemDescontarActivo.value as any).sucursalId || sucursalActivaId.value || 1
+
+  try {
+    const verif = await notificacionesStore.verificarStockVenta(sucId, prodId, cant)
+    if (!verif.puedeVender) {
+      agregarToast('Stock Insuficiente', verif.mensajeAlerta || `La cantidad solicitada supera el stock disponible (${stockDisp} u.).`, 'danger')
+      return
+    }
+    if (verif.nivelAlerta === 'AGOTADO_POST_VENTA' || verif.nivelAlerta === 'STOCK_BAJO_POST_VENTA') {
+      agregarToast('Advertencia de Stock Físico', verif.mensajeAlerta, 'warning')
+    }
+  } catch (_) {
+    if (cant > stockDisp) {
+      agregarToast('Validación', `La cantidad a descontar (${cant} u.) supera el stock disponible en este lote (${stockDisp} u.).`, 'warning')
+      return
+    }
   }
 
   const motivoFinal = formDescontar.motivo === 'Otro'
@@ -962,6 +979,8 @@ export async function ejecutarDescuentoUnidades() {
     )
     cerrarModalDescontar()
     await recargarTodo()
+    // Actualizar inmediatamente la campana de notificaciones y alertas
+    await notificacionesStore.cargarNotificaciones(true)
   } catch (err: any) {
     agregarToast('Error al Descontar Unidades', extraerMensajeError(err), 'danger')
   } finally {
@@ -2248,6 +2267,11 @@ export async function recargarTodo() {
     } else if (catRes.status === 'rejected') {
       console.error('Error al listar categorías:', catRes.reason)
     }
+
+    try {
+      const notifStore = useNotificacionesStore()
+      await notifStore.cargarNotificaciones(true)
+    } catch (_) {}
   } catch (err: any) {
     agregarToast('Conexión con Backend', extraerMensajeError(err), 'warning')
   } finally {
@@ -2279,8 +2303,12 @@ export async function inicializarInventario() {
   await recargarTodo()
 
   const queryTab = router.currentRoute.value?.query?.tab as string
-  if (queryTab && ['stock', 'espera', 'catalogo', 'kardex'].includes(queryTab)) {
-    activeTab.value = queryTab as 'stock' | 'espera' | 'catalogo' | 'kardex'
+  if (queryTab) {
+    if (queryTab === 'pendientes' || queryTab === 'espera') {
+      activeTab.value = 'espera'
+    } else if (['stock', 'catalogo', 'kardex'].includes(queryTab)) {
+      activeTab.value = queryTab as 'stock' | 'espera' | 'catalogo' | 'kardex'
+    }
   }
 }
 
