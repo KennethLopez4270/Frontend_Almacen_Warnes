@@ -13,8 +13,8 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem;
-  color: #0f172a;
-  background-color: #f8fafc;
+  color: var(--erp-text-main);
+  background-color: var(--erp-bg-page);
   min-height: calc(100vh - 80px);
   font-family: inherit;
 }
@@ -102,11 +102,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
   padding: 0.35rem 0.65rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border-radius: var(--erp-radius-md);
+  box-shadow: var(--erp-shadow-sm);
 }
 
 .inv-branch-badge-card,
@@ -320,9 +320,9 @@
 .spinner-large {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
+  border: 3px solid var(--erp-border-light);
   border-radius: 50%;
-  border-top-color: #0f172a;
+  border-top-color: var(--erp-primary);
   animation: spin 0.8s linear infinite;
   margin-bottom: 0.75rem;
 }
@@ -331,4 +331,48 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ====================================================================
+   ALERTAS Y CALLOUTS GLOBALES
+   ==================================================================== */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-sm);
+  margin-bottom: 1.25rem;
+  line-height: 1.35;
+}
+
+.alert-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.alert-danger {
+  background-color: var(--erp-danger-bg);
+  color: var(--erp-danger);
+  border: 1px solid var(--erp-danger-border);
+}
+
+.alert-success {
+  background-color: var(--erp-success-bg);
+  color: var(--erp-success);
+  border: 1px solid var(--erp-success-border);
+}
+
+.alert-warning {
+  background-color: var(--erp-warning-bg);
+  color: var(--erp-warning);
+  border: 1px solid var(--erp-warning-border);
+}
+
+.alert-info {
+  background-color: var(--erp-info-bg);
+  color: var(--erp-info);
+  border: 1px solid var(--erp-info-border);
 }

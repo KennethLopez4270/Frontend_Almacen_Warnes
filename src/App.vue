@@ -50,7 +50,7 @@ body {
 .app-layout {
   min-height: 100vh;
   display: flex;
-  background-color: #f8fafc;
+  background-color: var(--erp-bg-page);
   width: 100%;
 }
 
@@ -81,12 +81,12 @@ body {
 }
 
 .app-footer {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--erp-border-light);
   padding: 1rem 1.5rem;
   text-align: center;
-  color: #94a3b8;
+  color: var(--erp-text-muted);
   font-size: 0.8rem;
-  background: #ffffff;
+  background: var(--erp-bg-card);
   margin-top: auto;
 }
 </style>

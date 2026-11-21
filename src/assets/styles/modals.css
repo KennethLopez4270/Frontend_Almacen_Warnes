@@ -293,13 +293,26 @@
 }
 
 .inv-modal-container > .inv-modal-footer,
-.prov-modal-container > .prov-modal-footer {
+.prov-modal-container > .prov-modal-footer,
+.modal-card > .modal-footer {
   padding: 1.15rem 1.5rem 1.35rem 1.5rem;
   margin-top: 0;
   border-top: 1px solid #e2e8f0;
   background-color: #f8fafc;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: var(--erp-radius-2xl, 16px);
+  border-bottom-right-radius: var(--erp-radius-2xl, 16px);
+}
+
+/* Pie de modal cuando se encuentra contenido dentro de un formulario (modal-form) */
+.modal-form > .modal-footer,
+.inv-modal-form > .inv-modal-footer,
+.prov-modal-form > .prov-modal-footer {
+  padding: 1.15rem 1.5rem 1.35rem 1.5rem;
+  margin: 0.75rem -1.5rem -1.25rem -1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  border-bottom-left-radius: var(--erp-radius-2xl, 16px);
+  border-bottom-right-radius: var(--erp-radius-2xl, 16px);
 }
 
 /* Modales y Cajas de Confirmacion */

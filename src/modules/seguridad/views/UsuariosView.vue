@@ -2,10 +2,8 @@
 import { onMounted } from 'vue'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 import {
-  authStore,
   cargando,
   usuarios,
-  usuariosActivosDetalle,
   listaSucursales,
   obtenerEtiquetaSucursal,
   searchQuery,
@@ -13,12 +11,8 @@ import {
   selectedSucursal,
   mostrarBajas,
   toasts,
-  toastSeq,
-  agregarToast,
   cerrarToast,
-  extraerError,
   cargarUsuarios,
-  mapaEstadosPorId,
   obtenerEstadoUsuario,
   totalUsuarios,
   totalCajeros,
@@ -51,9 +45,7 @@ import {
   formatearFecha,
   inicializarUsuarios,
   ROLES_USUARIO,
-  MAPA_ROLES,
   ESTADOS_USUARIO,
-  MAPA_ESTADOS_USUARIO,
 } from './UsuariosView'
 
 onMounted(async () => {

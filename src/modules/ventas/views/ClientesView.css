@@ -1,0 +1,30 @@
+/* ====================================================================
+   MODULO VENTAS - CLIENTES VIEW
+   Los estilos comunes (Topbar, Botones, Inputs, Modales, Tablas y Toasts)
+   provienen del Design System global en src/assets/styles/ (index.css)
+   ==================================================================== */
+
+/* Formato específico para la celda de nombre y razón social */
+.client-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.client-person-name {
+  font-size: var(--erp-font-xs);
+  color: var(--erp-text-muted);
+}
+
+/* Pastilla monoespaciada para el NIT / CI */
+.client-nit-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-main);
+  background-color: var(--erp-bg-muted);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--erp-radius-sm);
+  border: 1px solid var(--erp-border-light);
+  display: inline-block;
+}

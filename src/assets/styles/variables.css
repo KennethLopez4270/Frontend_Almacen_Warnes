@@ -10,38 +10,54 @@
   --erp-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --erp-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
-  --erp-font-xs: 0.75rem;       /* 12px: badges, chips, fechas pequeñas */
-  --erp-font-sm: 0.8125rem;     /* 13px: hints, labels secundarias, tablas compactas */
-  --erp-font-base: 0.875rem;    /* 14px: cuerpo de texto, inputs, tablas */
-  --erp-font-md: 1rem;          /* 16px: párrafos destacados, botones principales */
-  --erp-font-lg: 1.125rem;      /* 18px: subtítulos de tarjeta, modales pequeños */
-  --erp-font-xl: 1.25rem;       /* 20px: títulos de modales, cards KPI */
-  --erp-font-2xl: 1.5rem;       /* 24px: títulos de sección */
-  --erp-font-3xl: 1.75rem;      /* 28px: títulos principales de página */
+  --erp-font-xs: 0.75rem;
+  /* 12px: badges, chips, fechas pequeñas */
+  --erp-font-sm: 0.8125rem;
+  /* 13px: hints, labels secundarias, tablas compactas */
+  --erp-font-base: 0.875rem;
+  /* 14px: cuerpo de texto, inputs, tablas */
+  --erp-font-md: 1rem;
+  /* 16px: párrafos destacados, botones principales */
+  --erp-font-lg: 1.125rem;
+  /* 18px: subtítulos de tarjeta, modales pequeños */
+  --erp-font-xl: 1.25rem;
+  /* 20px: títulos de modales, cards KPI */
+  --erp-font-2xl: 1.5rem;
+  /* 24px: títulos de sección */
+  --erp-font-3xl: 1.75rem;
+  /* 28px: títulos principales de página */
 
-  /* ------------------------------------------------------------------
-     2. SUPERFICIES Y FONDOS
-     ------------------------------------------------------------------ */
-  --erp-bg-page: #f8fafc;
+  --erp-bg-page: #e2e8f0;
+  /* Canvas general pizarra mate (Slate 200) - Descanso visual, antirreflejo y armonía con el sidebar */
   --erp-bg-card: #ffffff;
+  /* Superficies elevadas: Tarjetas, Paneles POS, Modales y Tablas */
   --erp-bg-muted: #f1f5f9;
+  /* Fondos atenuados, cabeceras de tablas e insets secundarios (Slate 100) */
   --erp-bg-hover: #f8fafc;
+  /* Filas de tabla o ítems interactivos en hover */
 
   /* ------------------------------------------------------------------
      3. COLORES DE TEXTO
      ------------------------------------------------------------------ */
-  --erp-text-main: #0f172a;      /* Texto de máxima jerarquía / Títulos */
-  --erp-text-body: #1e293b;      /* Texto de lectura general */
-  --erp-text-secondary: #334155; /* Etiquetas y encabezados de tabla */
-  --erp-text-muted: #64748b;     /* Textos descriptivos y fechas */
-  --erp-text-subtle: #94a3b8;    /* Placeholders e íconos inactivos */
+  --erp-text-main: #0f172a;
+  /* Texto de máxima jerarquía / Títulos */
+  --erp-text-body: #1e293b;
+  /* Texto de lectura general */
+  --erp-text-secondary: #334155;
+  /* Etiquetas y encabezados de tabla */
+  --erp-text-muted: #64748b;
+  /* Textos descriptivos y fechas */
+  --erp-text-subtle: #94a3b8;
+  /* Placeholders e íconos inactivos */
 
   /* ------------------------------------------------------------------
      4. BORDES Y SEPARADORES
      ------------------------------------------------------------------ */
-  --erp-border-light: #e2e8f0;   /* Bordes de tarjetas y paneles */
-  --erp-border-input: #cbd5e1;   /* Bordes de inputs y selects */
-  --erp-border-row: #f1f5f9;     /* Separadores de filas en tablas */
+  --erp-border-light: #cbd5e1;
+  /* Bordes nítidos de tarjetas y paneles contra fondo Slate 200 */
+  --erp-border-input: #cbd5e1;
+  /* Bordes de inputs y selects */
+  --erp-border-row: #e2e8f0;
 
   /* ------------------------------------------------------------------
      5. MARCA, ACCIONES Y BOTONES
@@ -55,7 +71,8 @@
   /* Oscuro: Slate Obsidiana (Sidebar y botones sobrios) */
   --erp-dark: #0f172a;
   --erp-dark-hover: #1e293b;
-  --erp-btn-primary-bg: #0f172a;      /* Compatibilidad con estilos existentes */
+  --erp-btn-primary-bg: #0f172a;
+  /* Compatibilidad con estilos existentes */
   --erp-btn-primary-hover: #1e293b;
 
   /* ------------------------------------------------------------------
@@ -98,10 +115,10 @@
   /* ------------------------------------------------------------------
      8. SOMBRAS (BOX SHADOWS)
      ------------------------------------------------------------------ */
-  --erp-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --erp-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.04);
-  --erp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-  --erp-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --erp-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --erp-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --erp-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.09), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+  --erp-shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.2), 0 10px 10px -5px rgba(15, 23, 42, 0.06);
 
   /* ------------------------------------------------------------------
      9. ACCESIBILIDAD, FOCO Y TRANSICIONES

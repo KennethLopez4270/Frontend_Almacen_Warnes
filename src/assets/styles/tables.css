@@ -66,7 +66,7 @@
 .inv-table th,
 .prov-table th,
 .data-table th {
-  background-color: var(--erp-bg-page);
+  background-color: var(--erp-bg-muted);
   color: var(--erp-text-secondary);
   font-weight: 600;
   font-size: var(--erp-font-xs);

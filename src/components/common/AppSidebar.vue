@@ -42,8 +42,9 @@ const navModules: NavModule[] = [
     icon: 'ventas',
     roles: [1, 2, 3], // Cajero, Supervisor, Propietario
     items: [
-      { name: 'Terminal POS', to: '/pos' },
+      { name: 'Caja', to: '/pos' },
       { name: 'Historial de Ventas', to: '/caja/historial-ventas' },
+      { name: 'Clientes', to: '/ventas/clientes' },
     ],
   },
   {

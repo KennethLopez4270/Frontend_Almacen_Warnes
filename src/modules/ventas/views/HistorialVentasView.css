@@ -1,30 +1,133 @@
-.view-container {
-  padding: 1.5rem;
+/* ====================================================================
+   MODULO VENTAS - HISTORIAL VENTAS VIEW
+   Los estilos comunes (Topbar, Botones, Inputs, Modales, Tablas y Toasts)
+   provienen del Design System global en src/assets/styles/ (index.css)
+   ==================================================================== */
+
+.text-strikethrough {
+  text-decoration: line-through;
+  color: var(--erp-text-subtle);
 }
-.view-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+.row-anulada {
+  background-color: var(--erp-danger-bg) !important;
+  opacity: 0.85;
 }
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #06b6d4;
-  background-color: #ecfeff;
-  border-radius: 9999px;
-  margin-bottom: 0.75rem;
+
+.row-anulada:hover td {
+  background-color: #fee2e2 !important;
 }
-h1 {
-  font-size: 1.75rem;
+
+/* ── Modales específicos de ticket / resumen de venta ── */
+.ticket-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--erp-bg-page);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  margin-bottom: 1rem;
+}
+
+.ticket-detalles-box {
+  margin-bottom: 1.25rem;
+}
+
+.section-title {
+  font-size: var(--erp-font-xs);
   font-weight: 700;
-  color: #1e293b;
+  color: var(--erp-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
 }
-p {
-  color: #64748b;
-  font-size: 0.95rem;
+
+.ticket-totales-card {
+  padding: 1rem;
+  background-color: var(--erp-bg-page);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--erp-border-light);
+  color: var(--erp-text-main);
+}
+
+.total-accent {
+  color: var(--erp-primary);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.subtotal-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-muted);
+}
+
+/* ── Modal de Anulación ── */
+.modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title-svg.danger {
+  color: var(--erp-danger);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.alert-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  line-height: 1.4;
+  color: var(--erp-text-main);
+}
+
+.alert-text p {
+  margin: 0;
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-secondary);
+}
+
+.anulacion-resumen {
+  margin-top: 1rem;
+  padding: 0.85rem 1.15rem;
+  background-color: var(--erp-bg-muted);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.anulacion-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--erp-font-sm);
+}
+
+.anulacion-label {
+  color: var(--erp-text-secondary);
+}
+
+.anulacion-value {
+  font-weight: 600;
+  color: var(--erp-text-main);
 }

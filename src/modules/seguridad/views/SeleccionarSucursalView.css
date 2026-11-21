@@ -1,0 +1,364 @@
+/* ====================================================================
+   MODULO SEGURIDAD - SELECCIONAR SUCURSAL VIEW
+   Estilos específicos que complementan el Design System global
+   ==================================================================== */
+
+.sucursal-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--erp-bg-page);
+  padding: 2rem 1.5rem;
+}
+
+.sucursal-wrapper {
+  width: 100%;
+  max-width: 800px;
+}
+
+/* BRAND HEADER */
+.brand-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--erp-bg-card);
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--erp-radius-pill);
+  box-shadow: var(--erp-shadow-sm);
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--erp-border-light);
+}
+
+.brand-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--erp-primary);
+}
+
+.brand-title {
+  font-size: var(--erp-font-lg);
+  font-weight: 800;
+  color: var(--erp-text-main);
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-base);
+}
+
+/* SUCURSAL CARD PRINCIPAL */
+.sucursal-card {
+  background-color: var(--erp-bg-card);
+  border-radius: var(--erp-radius-2xl);
+  padding: 2.25rem;
+  box-shadow: var(--erp-shadow-modal);
+  border: 1px solid var(--erp-border-light);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.card-title {
+  font-size: var(--erp-font-2xl);
+  font-weight: 800;
+  color: var(--erp-text-main);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.card-desc {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-base);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* --- WARNING DE USUARIO SIN SUCURSAL --- */
+.icon-warning-wrapper {
+  width: 64px;
+  height: 64px;
+  background-color: var(--erp-warning-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  color: var(--erp-warning);
+}
+
+.icon-warning {
+  width: 34px;
+  height: 34px;
+}
+
+.warning-callout {
+  background-color: var(--erp-warning-bg);
+  border-left: 4px solid var(--erp-warning);
+  padding: 1rem 1.25rem;
+  border-radius: var(--erp-radius-lg);
+  color: var(--erp-warning-hover);
+  font-size: var(--erp-font-base);
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.btn-primary-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--erp-dark);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: var(--erp-font-base);
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--erp-radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: var(--erp-transition-fast);
+}
+
+.btn-primary-logout:hover {
+  background-color: var(--erp-danger);
+}
+
+.btn-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* --- GRID DE SUCURSALES --- */
+.branches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.branch-item-card {
+  background-color: var(--erp-bg-card);
+  border: 1.5px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: var(--erp-transition-normal);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.branch-item-card:hover {
+  border-color: var(--erp-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.12);
+}
+
+.branch-item-card.is-current {
+  border-color: var(--erp-success);
+  background-color: var(--erp-success-bg);
+}
+
+.branch-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.branch-code-badge {
+  font-size: var(--erp-font-xs);
+  font-weight: 700;
+  color: var(--erp-primary);
+  background-color: var(--erp-primary-light);
+  border: 1px solid var(--erp-primary-border);
+  padding: 2px 8px;
+  border-radius: var(--erp-radius-md);
+  letter-spacing: 0.02em;
+}
+
+.branch-users-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--erp-font-xs);
+  color: var(--erp-text-muted);
+  font-weight: 500;
+}
+
+.tag-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.branch-main-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+  flex: 1;
+}
+
+.branch-icon-box {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  background: var(--erp-primary-light);
+  border-radius: var(--erp-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--erp-primary);
+  border: 1px solid var(--erp-primary-border);
+}
+
+.store-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.branch-city {
+  font-size: var(--erp-font-lg);
+  font-weight: 700;
+  color: var(--erp-text-main);
+  margin-bottom: 0.25rem;
+}
+
+.branch-address {
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-muted);
+  line-height: 1.35;
+  margin-bottom: 0.35rem;
+}
+
+.branch-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--erp-font-xs);
+  color: var(--erp-info);
+  font-weight: 600;
+}
+
+.phone-svg {
+  width: 12px;
+  height: 12px;
+}
+
+.btn-select-branch {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--erp-bg-muted);
+  border: 1px solid var(--erp-border-light);
+  padding: 0.6rem 1rem;
+  border-radius: var(--erp-radius-lg);
+  color: var(--erp-text-body);
+  font-weight: 600;
+  font-size: var(--erp-font-sm);
+  cursor: pointer;
+  transition: var(--erp-transition-fast);
+}
+
+.branch-item-card:hover .btn-select-branch {
+  background-color: var(--erp-primary);
+  color: #ffffff;
+  border-color: var(--erp-primary);
+}
+
+.arrow-svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.18s ease;
+}
+
+.branch-item-card:hover .arrow-svg {
+  transform: translateX(4px);
+}
+
+/* --- EMPTY STATE --- */
+.empty-branches-box {
+  padding: 2.5rem 1.5rem;
+  background-color: var(--erp-bg-page);
+  border-radius: var(--erp-radius-xl);
+  border: 1px dashed var(--erp-border-input);
+  margin-bottom: 1.5rem;
+}
+
+.empty-title {
+  font-weight: 700;
+  color: var(--erp-text-main);
+  margin-bottom: 0.5rem;
+}
+
+.empty-desc {
+  color: var(--erp-text-muted);
+  font-size: var(--erp-font-base);
+  margin-bottom: 1.25rem;
+}
+
+.btn-create-first {
+  background-color: var(--erp-primary);
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--erp-radius-lg);
+  font-weight: 600;
+  font-size: var(--erp-font-base);
+  cursor: pointer;
+  transition: var(--erp-transition-fast);
+}
+
+.btn-create-first:hover {
+  background-color: var(--erp-primary-hover);
+}
+
+/* --- FOOTER ACTIONS --- */
+.card-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--erp-border-row);
+}
+
+.btn-link-action {
+  background: transparent;
+  border: none;
+  color: var(--erp-primary);
+  font-size: var(--erp-font-base);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: var(--erp-transition-fast);
+}
+
+.btn-link-action:hover {
+  text-decoration: underline;
+  color: var(--erp-primary-hover);
+}
+
+.btn-link-logout {
+  background: transparent;
+  border: none;
+  color: var(--erp-danger);
+  font-size: var(--erp-font-base);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: var(--erp-transition-fast);
+}
+
+.btn-link-logout:hover {
+  text-decoration: underline;
+  color: var(--erp-danger-hover);
+}
+
