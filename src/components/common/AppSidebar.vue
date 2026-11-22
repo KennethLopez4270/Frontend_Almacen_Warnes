@@ -2,11 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-<<<<<<< HEAD
 import { cajaService } from '@/modules/caja/services/cajaService'
-=======
 import { useNotificacionesStore } from '@/stores/notificaciones'
->>>>>>> 047a089435a5ff0a9fcc22f86c61c4c2782f1e09
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 
 const route = useRoute()
