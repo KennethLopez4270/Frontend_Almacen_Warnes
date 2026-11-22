@@ -1,11 +1,12 @@
 import axios from 'axios'
+import { API_URL, URL_BASE } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A SUCURSALES FÍSICAS
 // ====================================================================
 
 const apiSucursales = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -36,7 +37,7 @@ apiSucursales.interceptors.response.use(
         cleanMessage = data
       }
     } else if (error.request) {
-      cleanMessage = 'No se pudo conectar con el servidor (backend inalcanzable en http://localhost:8080).'
+      cleanMessage = `No se pudo conectar con el servidor (backend inalcanzable en ${URL_BASE}).`
     } else if (error.message) {
       cleanMessage = error.message
     }

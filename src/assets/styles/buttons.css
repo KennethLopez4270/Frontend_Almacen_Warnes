@@ -182,6 +182,16 @@
 }
 
 /* Iconos de Boton */
+.prov-icon-nano,
+.inv-icon-nano {
+  width: 13px;
+  height: 13px;
+  min-width: 13px;
+  max-width: 13px;
+  max-height: 13px;
+  flex-shrink: 0;
+}
+
 .btn-icon,
 .inv-icon-xs,
 .prov-icon-xs {

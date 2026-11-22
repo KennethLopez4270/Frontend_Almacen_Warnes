@@ -2,12 +2,23 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+<<<<<<< HEAD
 import { cajaService } from '@/modules/caja/services/cajaService'
+=======
+import { useNotificacionesStore } from '@/stores/notificaciones'
+>>>>>>> 047a089435a5ff0a9fcc22f86c61c4c2782f1e09
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notificacionesStore = useNotificacionesStore()
+
+const totalNoLeidas = computed(() => {
+  return typeof notificacionesStore.totalNoLeidas === 'number'
+    ? notificacionesStore.totalNoLeidas
+    : (notificacionesStore.notificaciones || []).filter((n) => !n.leido).length
+})
 
 // Estado de expansión del Sidebar (hover o toggle)
 const isHovered = ref(false)
@@ -56,7 +67,7 @@ const navModules: NavModule[] = [
     items: [
       { name: 'Lotes y Stock Físico', to: '/inventario' },
       { name: 'Distribuidores y Acuerdos', to: '/inventario/proveedores' },
-      { name: 'Kardex de Movimientos', to: '/inventario/kardex' },
+      { name: 'Historial de Movimientos', to: '/inventario/kardex' },
       { name: 'Sala de Espera (Auditoría)', to: '/auditoria/sala-espera' },
     ],
   },
@@ -88,7 +99,18 @@ const navModules: NavModule[] = [
 // Filtrado de módulos según el rol del usuario autenticado
 const visibleModules = computed(() => {
   const userRol = authStore.rolId || 1
-  return navModules.filter((m) => m.roles.includes(userRol))
+  return navModules
+    .filter((m) => m.roles.includes(userRol))
+    .map((m) => {
+      // Supervisor solo puede ver Dashboard dentro de Administración
+      if (m.id === 'administracion' && userRol === 2) {
+        return {
+          ...m,
+          items: m.items.filter((it) => it.to === '/dashboard'),
+        }
+      }
+      return m
+    })
 })
 
 // Abre automáticamente el módulo correspondiente a la ruta actual
@@ -183,6 +205,39 @@ function irASeleccionarSucursal() {
 
     <!-- 2. NAVEGACIÓN PRINCIPAL (LISTA DE MÓDULOS) -->
     <nav class="sidebar-nav">
+      <!-- ACCESO DIRECTO AL CENTRO DE ALERTAS -->
+      <div class="nav-module-group nav-alert-group">
+        <RouterLink
+          to="/notificaciones"
+          class="module-btn alert-direct-btn"
+          :class="{ 'is-active': route.path === '/notificaciones' }"
+          :title="!isExpanded ? 'Centro de Alertas' : undefined"
+        >
+          <div class="module-icon-box alert-icon-wrapper">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="module-svg"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span v-if="!isExpanded && totalNoLeidas > 0" class="mini-alert-badge">
+              {{ totalNoLeidas > 9 ? '9+' : totalNoLeidas }}
+            </span>
+          </div>
+
+          <div v-if="isExpanded" class="alert-title-wrapper">
+            <span class="module-title">Centro de Alertas</span>
+            <span v-if="totalNoLeidas > 0" class="sidebar-unread-counter">
+              {{ totalNoLeidas > 99 ? '99+' : totalNoLeidas }}
+            </span>
+          </div>
+        </RouterLink>
+      </div>
+
       <div v-for="mod in visibleModules" :key="mod.id" class="nav-module-group">
         <!-- BOTÓN MÓDULO (CABECERA) -->
         <button
@@ -544,6 +599,50 @@ function irASeleccionarSucursal() {
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+/* ENLACE DIRECTO AL CENTRO DE ALERTAS */
+.alert-direct-btn {
+  text-decoration: none;
+}
+
+.alert-icon-wrapper {
+  position: relative;
+}
+
+.mini-alert-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #0f172a;
+}
+
+.alert-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sidebar-unread-counter {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #ef4444;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 9999px;
 }
 
 .module-chevron {

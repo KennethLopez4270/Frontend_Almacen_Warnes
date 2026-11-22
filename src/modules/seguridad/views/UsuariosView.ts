@@ -16,6 +16,7 @@ import {
 } from '../services/seguridadService'
 import { sucursalService, type SucursalDTO } from '@/modules/configuracion/services/sucursalService'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificacionesStore } from '@/stores/notificaciones'
 
 export const authStore = useAuthStore()
 
@@ -327,6 +328,10 @@ export async function guardarNuevaPassword() {
     )
     modalPasswordVisible.value = false
     await cargarUsuarios()
+    try {
+      const notifStore = useNotificacionesStore()
+      await notifStore.cargarNotificaciones(true)
+    } catch (_) {}
   } catch (err: any) {
     agregarToast('Error al Restablecer', extraerError(err), 'danger')
   } finally {
@@ -364,6 +369,17 @@ export async function confirmarBaja() {
     agregarToast('Baja Lógica Exitosa', res.mensaje || `Usuario @${usuarioABaja.value.usuario} dado de baja.`, 'info')
     modalBajaVisible.value = false
     await cargarUsuarios()
+    try {
+      const notifStore = useNotificacionesStore()
+      await notifStore.crearNotificacion({
+        rolDestino: 3,
+        tipoNotificacion: 8,
+        tituloAlerta: 'Usuario Bloqueado en el Sistema',
+        mensajeAlerta: `El usuario @${usuarioABaja.value.usuario} fue dado de baja / bloqueado en el sistema.`,
+        direccion: '/admin/usuarios',
+      })
+      await notifStore.cargarNotificaciones(true)
+    } catch (_) {}
   } catch (err: any) {
     agregarToast('Error al Dar de Baja', extraerError(err), 'danger')
   } finally {

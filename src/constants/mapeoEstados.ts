@@ -234,7 +234,7 @@ export const TIPOS_MOVIMIENTO_CAJA = TIPOS_MOVIMIENTO
 
 export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
   [TIPOS_MOVIMIENTO.ENTRADA]: {
-    id: 23,
+    id: 25,
     codigo: 1,
     label: 'Entrada',
     bg: '#F0FDF4',
@@ -242,12 +242,49 @@ export const MAPA_TIPOS_MOVIMIENTO: Record<number, ConceptoItem> = {
     border: '#BBF7D0'
   },
   [TIPOS_MOVIMIENTO.SALIDA]: {
-    id: 24,
+    id: 26,
     codigo: 2,
     label: 'Salida',
     bg: '#FEF2F2',
     text: '#991B1B',
     border: '#FECACA'
+  }
+}
+
+// ====================================================================
+// 9. TIPOS DE MOVIMIENTO DE INVENTARIO (`tipo_movimiento` en historial_inventario / conceptos grupo 9)
+// ====================================================================
+
+export const TIPOS_MOVIMIENTO_INVENTARIO = {
+  INGRESO: 1,
+  EGRESO: 2,
+  AJUSTE: 3,
+} as const
+
+export const MAPA_TIPOS_MOVIMIENTO_INVENTARIO: Record<number, ConceptoItem> = {
+  [TIPOS_MOVIMIENTO_INVENTARIO.INGRESO]: {
+    id: 37,
+    codigo: 1,
+    label: 'Ingreso',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0'
+  },
+  [TIPOS_MOVIMIENTO_INVENTARIO.EGRESO]: {
+    id: 38,
+    codigo: 2,
+    label: 'Egreso',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA'
+  },
+  [TIPOS_MOVIMIENTO_INVENTARIO.AJUSTE]: {
+    id: 39,
+    codigo: 3,
+    label: 'Ajuste',
+    bg: '#EFF6FF',
+    text: '#1D4ED8',
+    border: '#BFDBFE'
   }
 }
 
@@ -330,6 +367,96 @@ export const MAPA_ESTADOS_USUARIO: Record<number, ConceptoItem> = {
     id: 3,
     codigo: 3,
     label: 'Bloqueado',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA',
+    icon: 'lock'
+  }
+}
+
+// ====================================================================
+// 8. TIPOS DE NOTIFICACION (`tipo_notificacion` en notificaciones / conceptos grupo 10)
+// ====================================================================
+
+export const TIPOS_NOTIFICACION = {
+  STOCK_AGOTADO: 1,
+  STOCK_BAJO: 2,
+  SALA_ESPERA_INGRESO: 3,
+  SALA_ESPERA_OBSERVADO: 4,
+  SOLICITUD_ACCESO_DASHBOARD: 5,
+  ACCESO_DASHBOARD_AUTORIZADO: 6,
+  RECUPERACION_PASSWORD: 7,
+  USUARIO_BLOQUEADO: 8,
+} as const
+
+export const MAPA_TIPOS_NOTIFICACION: Record<number, ConceptoItem> = {
+  [TIPOS_NOTIFICACION.STOCK_AGOTADO]: {
+    id: 41,
+    codigo: 1,
+    label: 'Stock Agotado',
+    bg: '#FEF2F2',
+    text: '#991B1B',
+    border: '#FECACA',
+    icon: 'alert-octagon'
+  },
+  [TIPOS_NOTIFICACION.STOCK_BAJO]: {
+    id: 42,
+    codigo: 2,
+    label: 'Stock Bajo',
+    bg: '#FFFBEB',
+    text: '#B45309',
+    border: '#FDE68A',
+    icon: 'alert-triangle'
+  },
+  [TIPOS_NOTIFICACION.SALA_ESPERA_INGRESO]: {
+    id: 43,
+    codigo: 3,
+    label: 'Sala de Espera (Ingreso)',
+    bg: '#FFF7ED',
+    text: '#C2410C',
+    border: '#FED7AA',
+    icon: 'clock'
+  },
+  [TIPOS_NOTIFICACION.SALA_ESPERA_OBSERVADO]: {
+    id: 44,
+    codigo: 4,
+    label: 'Sala de Espera (Observado)',
+    bg: '#FFF7ED',
+    text: '#EA580C',
+    border: '#FED7AA',
+    icon: 'alert-circle'
+  },
+  [TIPOS_NOTIFICACION.SOLICITUD_ACCESO_DASHBOARD]: {
+    id: 45,
+    codigo: 5,
+    label: 'Solicitud Dashboard',
+    bg: '#EFF6FF',
+    text: '#1D4ED8',
+    border: '#BFDBFE',
+    icon: 'shield'
+  },
+  [TIPOS_NOTIFICACION.ACCESO_DASHBOARD_AUTORIZADO]: {
+    id: 46,
+    codigo: 6,
+    label: 'Dashboard Autorizado',
+    bg: '#F0FDF4',
+    text: '#166534',
+    border: '#BBF7D0',
+    icon: 'check-circle'
+  },
+  [TIPOS_NOTIFICACION.RECUPERACION_PASSWORD]: {
+    id: 47,
+    codigo: 7,
+    label: 'Recuperación Password',
+    bg: '#FEF2F2',
+    text: '#B91C1C',
+    border: '#FECACA',
+    icon: 'key'
+  },
+  [TIPOS_NOTIFICACION.USUARIO_BLOQUEADO]: {
+    id: 48,
+    codigo: 8,
+    label: 'Usuario Bloqueado',
     bg: '#FEF2F2',
     text: '#991B1B',
     border: '#FECACA',
@@ -435,9 +562,21 @@ export function getBadgeTipoMovimiento(tipoId: number | null | undefined, descri
   return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Movimiento #${tipoId}` }
 }
 
+export function getBadgeTipoMovimientoInventario(tipoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
+  if (!tipoId) return ITEM_DESCONOCIDO
+  const base = MAPA_TIPOS_MOVIMIENTO_INVENTARIO[tipoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Movimiento #${tipoId}` }
+}
+
 export function getBadgeEstadoUsuario(estadoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
   if (!estadoId) return ITEM_DESCONOCIDO
   const base = MAPA_ESTADOS_USUARIO[estadoId]
   return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Estado #${estadoId}` }
+}
+
+export function getBadgeTipoNotificacion(tipoId: number | null | undefined, descripcionDb?: string): ConceptoItem {
+  if (!tipoId) return ITEM_DESCONOCIDO
+  const base = MAPA_TIPOS_NOTIFICACION[tipoId]
+  return base ? { ...base, label: descripcionDb || base.label } : { ...ITEM_DESCONOCIDO, label: descripcionDb || `Notificación #${tipoId}` }
 }
 

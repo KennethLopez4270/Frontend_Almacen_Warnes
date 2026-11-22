@@ -1770,3 +1770,80 @@
   background-color: #eff6ff;
   color: #1d4ed8;
 }
+
+/* ==================================================================== */
+/* ESTILOS KARDEX (HISTORIAL DE MOVIMIENTOS)                            */
+/* ==================================================================== */
+
+.kardex-stock-flow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  background-color: #f8fafc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.kardex-stock-prev {
+  color: #64748b;
+  font-family: monospace;
+}
+
+.kardex-stock-diff {
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.kardex-stock-diff.diff-positive {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.kardex-stock-diff.diff-negative {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.kardex-stock-diff.diff-adjust {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.kardex-flow-arrow {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.kardex-stock-result {
+  color: #0f172a;
+  font-family: monospace;
+}
+
+.inv-badge-user {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #334155;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.inv-badge-authorizer {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #1e40af;
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}

@@ -18,6 +18,7 @@ import {
   type InventarioLote,
   type ProductoCatalogo,
   type InventarioPendiente as InventarioPendienteDTO,
+  type HistorialInventarioDTO,
   type RegistroPendienteRequest,
   type IngresoDirectoRequest,
   type DescontarUnidadesRequest,
@@ -27,6 +28,7 @@ import {
 } from '@/modules/inventario/services/inventarioService'
 import { proveedorService } from '@/modules/proveedores/services/proveedorService'
 import { useUsuarioActivo } from '@/composables/useUsuarioActivo'
+import { useNotificacionesStore } from '@/stores/notificaciones'
 
 // ====================================================================
 // 1. CONSTANTES Y TABLA PARAMETRICA CONCEPTOS (MAPEO 1:1 BD)
@@ -435,7 +437,50 @@ export function onSeleccionarProductoCatalogoEdicion(productoId: number | null) 
     onEditarCalculoPrecioLote()
   }
 }
-export const activeTab = ref<'stock' | 'espera' | 'catalogo'>('stock')
+export const activeTab = ref<'stock' | 'espera' | 'catalogo' | 'kardex'>('stock')
+
+// Estado y filtros de Kardex (Historial de Movimientos de Inventario)
+export const historialMovimientos = ref<HistorialInventarioDTO[]>([])
+export const cargandoHistorial = ref(false)
+export const filtroHistorialProducto = ref<number | ''>('')
+export const filtroHistorialTipo = ref<number | ''>('')
+export const busquedaHistorial = ref('')
+
+export async function recargarHistorial() {
+  cargandoHistorial.value = true
+  try {
+    const data = await inventarioService.listarHistorial({
+      sucursalId: sucursalSeleccionadaId.value,
+      productoId: filtroHistorialProducto.value !== '' ? Number(filtroHistorialProducto.value) : null,
+      tipoMovimiento: filtroHistorialTipo.value !== '' ? Number(filtroHistorialTipo.value) : null
+    })
+    historialMovimientos.value = data || []
+  } catch (err: any) {
+    console.error('Error al cargar historial de movimientos:', err)
+  } finally {
+    cargandoHistorial.value = false
+  }
+}
+
+export const historialFiltrado = computed(() => {
+  let list = historialMovimientos.value
+
+  const q = busquedaHistorial.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter((h) => {
+      return (
+        (h.nombreProducto && h.nombreProducto.toLowerCase().includes(q)) ||
+        (h.codigoInterno && h.codigoInterno.toLowerCase().includes(q)) ||
+        (h.codigoBarras && h.codigoBarras.toLowerCase().includes(q)) ||
+        (h.descripcion && h.descripcion.toLowerCase().includes(q)) ||
+        (h.nombreUsuarioCreacion && h.nombreUsuarioCreacion.toLowerCase().includes(q)) ||
+        (h.nombreUsuarioAutorizacion && h.nombreUsuarioAutorizacion.toLowerCase().includes(q))
+      )
+    })
+  }
+
+  return list
+})
 
 // Filtros compartidos
 export const searchQuery = ref('')
@@ -681,7 +726,7 @@ export const filasStock = computed<StockFilaCombinada[]>(() => {
         categoria_nombre: CATEGORIAS[categoriaId] ?? 'General',
         precio_venta_producto: Number(item.precio_venta ?? item.precioVenta ?? 0),
         estado_producto: item.estado_producto ?? item.estadoProducto ?? 1,
-        proveedor_id: null,
+        proveedor_id: item.proveedor_id ?? item.proveedorId ?? null,
         nombre_proveedor: item.nombre_proveedor || item.nombreProveedor || 'Compra directa'
       }
     })
@@ -698,6 +743,15 @@ export const filasStock = computed<StockFilaCombinada[]>(() => {
       // Filtro Categoría
       if (selectedCategoria.value !== '' && fila.categoria_id !== selectedCategoria.value) {
         return false
+      }
+      // Filtro Proveedor (solo en stock)
+      if (selectedProveedor.value !== '') {
+        const provId = Number(selectedProveedor.value)
+        const provSeleccionado = proveedores.value.find((p) => p.proveedor_id === provId)
+        const matchId = fila.proveedor_id != null && fila.proveedor_id === provId
+        const matchNombre = provSeleccionado && fila.nombre_proveedor &&
+          fila.nombre_proveedor.toLowerCase().trim() === provSeleccionado.nombre_empresa.toLowerCase().trim()
+        if (!matchId && !matchNombre) return false
       }
       // Filtro Estado Producto
       if (selectedEstadoProducto.value !== '' && fila.estado_producto !== selectedEstadoProducto.value) {
@@ -885,9 +939,26 @@ export async function ejecutarDescuentoUnidades() {
     agregarToast('Validación', 'La cantidad a descontar debe ser un número entero positivo mayor a 0.', 'warning')
     return
   }
-  if (cant > stockDisp) {
-    agregarToast('Validación', `La cantidad a descontar (${cant} u.) supera el stock disponible en este lote (${stockDisp} u.).`, 'warning')
-    return
+
+  // 1. Verificación en tiempo real mediante fn_notificaciones_verificar_stock_venta (Criterio 1)
+  const notificacionesStore = useNotificacionesStore()
+  const prodId = itemDescontarActivo.value.producto_id || (itemDescontarActivo.value as any).productoId || 1
+  const sucId = itemDescontarActivo.value.sucursal_id || (itemDescontarActivo.value as any).sucursalId || sucursalActivaId.value || 1
+
+  try {
+    const verif = await notificacionesStore.verificarStockVenta(sucId, prodId, cant)
+    if (!verif.puedeVender) {
+      agregarToast('Stock Insuficiente', verif.mensajeAlerta || `La cantidad solicitada supera el stock disponible (${stockDisp} u.).`, 'danger')
+      return
+    }
+    if (verif.nivelAlerta === 'AGOTADO_POST_VENTA' || verif.nivelAlerta === 'STOCK_BAJO_POST_VENTA') {
+      agregarToast('Advertencia de Stock Físico', verif.mensajeAlerta, 'warning')
+    }
+  } catch (_) {
+    if (cant > stockDisp) {
+      agregarToast('Validación', `La cantidad a descontar (${cant} u.) supera el stock disponible en este lote (${stockDisp} u.).`, 'warning')
+      return
+    }
   }
 
   const motivoFinal = formDescontar.motivo === 'Otro'
@@ -908,6 +979,8 @@ export async function ejecutarDescuentoUnidades() {
     )
     cerrarModalDescontar()
     await recargarTodo()
+    // Actualizar inmediatamente la campana de notificaciones y alertas
+    await notificacionesStore.cargarNotificaciones(true)
   } catch (err: any) {
     agregarToast('Error al Descontar Unidades', extraerMensajeError(err), 'danger')
   } finally {
@@ -2194,13 +2267,33 @@ export async function recargarTodo() {
     } else if (catRes.status === 'rejected') {
       console.error('Error al listar categorías:', catRes.reason)
     }
+
+    try {
+      const notifStore = useNotificacionesStore()
+      await notifStore.cargarNotificaciones(true)
+    } catch (_) {}
   } catch (err: any) {
     agregarToast('Conexión con Backend', extraerMensajeError(err), 'warning')
   } finally {
     cargando.value = false
     recargaEnProgreso = false
+    if (activeTab.value === 'kardex') {
+      recargarHistorial()
+    }
   }
 }
+
+watch(activeTab, (tab) => {
+  if (tab === 'kardex') {
+    recargarHistorial()
+  }
+})
+
+watch([filtroHistorialProducto, filtroHistorialTipo], () => {
+  if (activeTab.value === 'kardex') {
+    recargarHistorial()
+  }
+})
 
 export async function inicializarInventario() {
   try {
@@ -2208,6 +2301,15 @@ export async function inicializarInventario() {
   } catch (_) {}
   await cargarUsuarios()
   await recargarTodo()
+
+  const queryTab = router.currentRoute.value?.query?.tab as string
+  if (queryTab) {
+    if (queryTab === 'pendientes' || queryTab === 'espera') {
+      activeTab.value = 'espera'
+    } else if (['stock', 'catalogo', 'kardex'].includes(queryTab)) {
+      activeTab.value = queryTab as 'stock' | 'espera' | 'catalogo' | 'kardex'
+    }
+  }
 }
 
 

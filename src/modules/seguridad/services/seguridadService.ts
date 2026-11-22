@@ -1,11 +1,12 @@
 import axios from 'axios'
+import { API_URL, URL_BASE } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO AL MODULO DE SEGURIDAD (SPRING BOOT)
 // ====================================================================
 
 const apiSeguridad = axios.create({
-  baseURL: import.meta.env.VITE_API_SEGURIDAD_URL || 'http://localhost:8080/api/seguridad',
+  baseURL: `${API_URL}/seguridad`,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -36,7 +37,7 @@ apiSeguridad.interceptors.response.use(
         cleanMessage = data
       }
     } else if (error.request) {
-      cleanMessage = 'No se pudo conectar con el servidor (backend inalcanzable en http://localhost:8080).'
+      cleanMessage = `No se pudo conectar con el servidor (backend inalcanzable en ${URL_BASE}).`
     } else if (error.message) {
       cleanMessage = error.message
     }
