@@ -550,3 +550,40 @@
   font-weight: 600;
   color: var(--erp-text-secondary);
 }
+
+/* Banner de Jornada Laboral Iniciada */
+.banner-jornada-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: var(--erp-primary-light, #eff6ff);
+  border: 1px solid var(--erp-primary-border, #bfdbfe);
+  border-radius: var(--erp-radius-lg, 10px);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.15rem;
+}
+.banner-jornada-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-main);
+}
+.banner-jornada-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--erp-primary);
+  flex-shrink: 0;
+}
+.btn-banner-close {
+  background: transparent;
+  border: none;
+  font-size: 1.35rem;
+  color: var(--erp-text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+.btn-banner-close:hover {
+  color: var(--erp-text-main);
+}

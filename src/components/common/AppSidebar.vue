@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { cajaService } from '@/modules/caja/services/cajaService'
 import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 
 const route = useRoute()
@@ -66,17 +67,19 @@ const navModules: NavModule[] = [
     roles: [1, 2, 3], // Cajero, Supervisor, Propietario
     items: [
       { name: 'Arqueo y Cierre', to: '/caja/arqueo' },
-      { name: 'Historial de Caja', to: '/caja/historial-ventas' },
+      { name: 'Movimientos de Caja', to: '/caja/movimientos' },
+      { name: 'Libro Mayor', to: '/caja/libro-mayor' },
     ],
   },
   {
     id: 'administracion',
     title: 'Administración',
     icon: 'admin',
-    roles: [3], // Solo Propietario / Administrador
+    roles: [2, 3], // Supervisor y Propietario
     items: [
       { name: 'Dashboard Ejecutivo', to: '/dashboard' },
       { name: 'Gestión de Usuarios', to: '/admin/usuarios' },
+      { name: 'Auditoría de Sesiones', to: '/admin/sesiones' },
       { name: 'Configuración del ERP', to: '/admin/configuracion' },
     ],
   },
@@ -111,9 +114,40 @@ function toggleModule(moduleId: string) {
   openModules.value[moduleId] = !openModules.value[moduleId]
 }
 
-function handleLogout() {
-  authStore.logout()
-  router.push('/')
+const procesandoLogout = ref(false)
+
+async function handleLogout() {
+  if (procesandoLogout.value) return
+  procesandoLogout.value = true
+
+  try {
+    if (authStore.isCajero) {
+      // Si es Cajero, verificar si tuvo actividad en su turno
+      try {
+        const resumen = await cajaService.obtenerResumenTurno()
+        if (resumen && resumen.requiereArqueo) {
+          // Si tuvo actividad, redirigir a Arqueo de Caja del Turno
+          procesandoLogout.value = false
+          router.push('/caja/arqueo')
+          return
+        }
+      } catch (err) {
+        console.warn('No se pudo consultar resumen de turno:', err)
+      }
+    }
+
+    // Propietario, Supervisor o Cajero sin actividad: cerrar sesión directa en backend
+    try {
+      await cajaService.cerrarSesionDirecta()
+    } catch (err) {
+      console.warn('Aviso al cerrar sesión directa:', err)
+    }
+
+    authStore.logout()
+    router.push('/')
+  } finally {
+    procesandoLogout.value = false
+  }
 }
 
 function irASeleccionarSucursal() {

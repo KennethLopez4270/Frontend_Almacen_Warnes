@@ -43,6 +43,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/modules/caja/views/ArqueoCajaView.vue'),
   },
   {
+    path: '/caja/movimientos',
+    name: 'MovimientosCaja',
+    component: () => import('@/modules/caja/views/MovimientosCajaView.vue'),
+  },
+  {
+    path: '/caja/libro-mayor',
+    name: 'LibroMayor',
+    component: () => import('@/modules/caja/views/LibroMayorView.vue'),
+  },
+  {
     path: '/caja/historial-ventas',
     name: 'HistorialVentas',
     component: () => import('@/modules/ventas/views/HistorialVentasView.vue'),
@@ -61,6 +71,11 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/usuarios',
     name: 'Usuarios',
     component: () => import('@/modules/seguridad/views/UsuariosView.vue'),
+  },
+  {
+    path: '/admin/sesiones',
+    name: 'SesionesAuditoria',
+    component: () => import('@/modules/seguridad/views/SesionesAuditoriaView.vue'),
   },
   {
     path: '/admin/configuracion',

@@ -145,6 +145,23 @@ const METODOS = [
       </div>
     </header>
 
+    <!-- BANNER DE JORNADA LABORAL INICIADA (CAJERO) -->
+    <div v-if="authStore.isCajero && authStore.mostrarBannerJornada && authStore.horaSesionAbierta" class="banner-jornada-alert">
+      <div class="banner-jornada-content">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="banner-jornada-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div>
+          <strong>Jornada laboral iniciada:</strong>
+          <span>
+            Su turno inició a las {{ new Date(authStore.horaSesionAbierta).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) }}. Su actividad se contabilizará desde este momento para el arqueo de caja.
+          </span>
+        </div>
+      </div>
+      <button type="button" class="btn-banner-close" title="Descartar aviso" @click="authStore.descartarBannerJornada">&times;</button>
+    </div>
+
     <!-- ═══════════════════════════════════════════════════════════════
          GRID PRINCIPAL: PANEL LATERAL (IZQ) + CARRITO PROTAGONISTA (DER)
     ═══════════════════════════════════════════════════════════════ -->

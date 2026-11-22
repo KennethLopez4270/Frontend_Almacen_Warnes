@@ -14,6 +14,8 @@ const STORAGE_KEYS = {
   APELLIDOS: 'tw_apellidos',
   ROL_ID: 'tw_rol_id',
   ESTADO: 'tw_estado',
+  SESION_ID: 'tw_sesion_id',
+  HORA_SESION_ABIERTA: 'tw_hora_sesion_abierta',
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -48,6 +50,13 @@ export const useAuthStore = defineStore('auth', () => {
       ? Number(localStorage.getItem(STORAGE_KEYS.ESTADO))
       : null
   )
+  const sesionId = ref<number | null>(
+    localStorage.getItem(STORAGE_KEYS.SESION_ID)
+      ? Number(localStorage.getItem(STORAGE_KEYS.SESION_ID))
+      : null
+  )
+  const horaSesionAbierta = ref<string | null>(localStorage.getItem(STORAGE_KEYS.HORA_SESION_ABIERTA))
+  const mostrarBannerJornada = ref<boolean>(false)
 
   // Getters
   const isAuthenticated = computed(() => !!token.value && !!usuarioId.value)
@@ -116,6 +125,25 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(STORAGE_KEYS.SUCURSAL_ID, String(res.sucursalId))
     }
 
+    // Sesión de trabajo
+    sesionId.value = res.sesionId ?? null
+    horaSesionAbierta.value = res.horaSesionAbierta ?? null
+    if (res.sesionId) {
+      localStorage.setItem(STORAGE_KEYS.SESION_ID, String(res.sesionId))
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.SESION_ID)
+    }
+    if (res.horaSesionAbierta) {
+      localStorage.setItem(STORAGE_KEYS.HORA_SESION_ABIERTA, res.horaSesionAbierta)
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.HORA_SESION_ABIERTA)
+    }
+
+    // Si es cajero (rol 1), activar notificación de jornada laboral iniciada
+    if (res.rolId === 1 && res.horaSesionAbierta) {
+      mostrarBannerJornada.value = true
+    }
+
     // Persistir resto de datos en localStorage
     localStorage.setItem(STORAGE_KEYS.TOKEN, res.token)
     localStorage.setItem(STORAGE_KEYS.USER_ID, String(res.usuarioId))
@@ -139,6 +167,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function descartarBannerJornada() {
+    mostrarBannerJornada.value = false
+  }
+
   function logout() {
     token.value = null
     usuarioId.value = null
@@ -150,6 +182,9 @@ export const useAuthStore = defineStore('auth', () => {
     apellidos.value = null
     rolId.value = null
     estado.value = null
+    sesionId.value = null
+    horaSesionAbierta.value = null
+    mostrarBannerJornada.value = false
 
     Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k))
   }
@@ -169,6 +204,9 @@ export const useAuthStore = defineStore('auth', () => {
     apellidos,
     rolId,
     estado,
+    sesionId,
+    horaSesionAbierta,
+    mostrarBannerJornada,
     isAuthenticated,
     isPropietario,
     isSupervisor,
@@ -180,6 +218,7 @@ export const useAuthStore = defineStore('auth', () => {
     rolNombre,
     login,
     setSucursalActiva,
+    descartarBannerJornada,
     logout,
     solicitarRecuperacion,
   }

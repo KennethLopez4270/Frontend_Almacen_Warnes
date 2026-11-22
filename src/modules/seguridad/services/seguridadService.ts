@@ -64,6 +64,8 @@ export interface LoginResponseDTO {
   apellidos: string
   rolId: number
   estado?: number
+  sesionId?: number | null
+  horaSesionAbierta?: string | null
   mensaje: string
 }
 
