@@ -1,11 +1,12 @@
 import axios from 'axios'
+import { API_URL } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A CAJA, SESIONES Y REPORTES
 // ====================================================================
 
 const apiCaja = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -173,6 +174,7 @@ export interface ReporteListadoDTO {
   reporteId: number
   sucursalId: number
   codigoSucursal: string
+  nombreSucursal?: string
   periodo: string
   fechaInicio: string
   fechaFin: string
@@ -190,6 +192,7 @@ export interface ReporteDetalleDTO {
   reporteId: number
   sucursalId: number
   codigoSucursal: string
+  nombreSucursal?: string
   periodo: string
   fechaInicio: string
   fechaFin: string
