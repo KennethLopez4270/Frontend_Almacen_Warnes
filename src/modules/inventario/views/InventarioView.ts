@@ -693,6 +693,29 @@ export interface StockFilaCombinada {
   nombre_proveedor: string
 }
 
+// ====================================================================
+// ORDENAMIENTO EN INVENTARIO (STOCK Y MÁS RECIENTES)
+// ====================================================================
+export type CriterioOrdenStock =
+  | 'reciente'
+  | 'stock-desc'
+  | 'stock-asc'
+  | 'nombre-asc'
+  | 'nombre-desc'
+  | 'vencimiento-asc'
+
+export const ordenStock = ref<CriterioOrdenStock>('reciente')
+
+export function alternarOrdenStock(criterioBase: 'stock' | 'nombre' | 'reciente') {
+  if (criterioBase === 'stock') {
+    ordenStock.value = ordenStock.value === 'stock-desc' ? 'stock-asc' : 'stock-desc'
+  } else if (criterioBase === 'nombre') {
+    ordenStock.value = ordenStock.value === 'nombre-asc' ? 'nombre-desc' : 'nombre-asc'
+  } else if (criterioBase === 'reciente') {
+    ordenStock.value = 'reciente'
+  }
+}
+
 export const filasStock = computed<StockFilaCombinada[]>(() => {
   return lotesStock.value
     .map((item) => {
@@ -770,6 +793,27 @@ export const filasStock = computed<StockFilaCombinada[]>(() => {
         }
       }
       return true
+    })
+    .sort((a, b) => {
+      switch (ordenStock.value) {
+        case 'reciente':
+          return (b.lote_id || b.inventario_id) - (a.lote_id || a.inventario_id)
+        case 'stock-desc':
+          return b.stock - a.stock
+        case 'stock-asc':
+          return a.stock - b.stock
+        case 'nombre-asc':
+          return a.nombre_producto.localeCompare(b.nombre_producto, 'es', { sensitivity: 'base' })
+        case 'nombre-desc':
+          return b.nombre_producto.localeCompare(a.nombre_producto, 'es', { sensitivity: 'base' })
+        case 'vencimiento-asc':
+          if (a.dias_vencimiento === null && b.dias_vencimiento === null) return 0
+          if (a.dias_vencimiento === null) return 1
+          if (b.dias_vencimiento === null) return -1
+          return a.dias_vencimiento - b.dias_vencimiento
+        default:
+          return 0
+      }
     })
 })
 
@@ -1007,6 +1051,11 @@ export const pendientesFiltrados = computed(() => {
         if (!nombre.includes(q) && !interno.includes(q) && !barras.includes(q)) return false
       }
       return true
+    })
+    .sort((a, b) => {
+      const idA = a.inventario_pendiente_id || a.inventarioPendienteId || 0
+      const idB = b.inventario_pendiente_id || b.inventarioPendienteId || 0
+      return idB - idA
     })
 })
 
@@ -1456,6 +1505,25 @@ export interface ProductoCatalogoVista {
   marca_baja: boolean
 }
 
+export type CriterioOrdenCatalogo =
+  | 'reciente'
+  | 'stock-desc'
+  | 'stock-asc'
+  | 'nombre-asc'
+  | 'nombre-desc'
+
+export const ordenCatalogo = ref<CriterioOrdenCatalogo>('reciente')
+
+export function alternarOrdenCatalogo(criterioBase: 'stock' | 'nombre' | 'reciente') {
+  if (criterioBase === 'stock') {
+    ordenCatalogo.value = ordenCatalogo.value === 'stock-desc' ? 'stock-asc' : 'stock-desc'
+  } else if (criterioBase === 'nombre') {
+    ordenCatalogo.value = ordenCatalogo.value === 'nombre-asc' ? 'nombre-desc' : 'nombre-asc'
+  } else if (criterioBase === 'reciente') {
+    ordenCatalogo.value = 'reciente'
+  }
+}
+
 export const productosCatalogo = computed<ProductoCatalogoVista[]>(() => {
   return catalogoBackend.value.map((p) => {
     const catId = p.categoria_id || p.categoriaId || 1
@@ -1487,6 +1555,22 @@ export const productosCatalogo = computed<ProductoCatalogoVista[]>(() => {
       return false
     }
     return true
+  })
+  .sort((a, b) => {
+    switch (ordenCatalogo.value) {
+      case 'reciente':
+        return b.producto_id - a.producto_id
+      case 'stock-desc':
+        return b.stock_total - a.stock_total
+      case 'stock-asc':
+        return a.stock_total - b.stock_total
+      case 'nombre-asc':
+        return a.nombre_producto.localeCompare(b.nombre_producto, 'es', { sensitivity: 'base' })
+      case 'nombre-desc':
+        return b.nombre_producto.localeCompare(a.nombre_producto, 'es', { sensitivity: 'base' })
+      default:
+        return 0
+    }
   })
 })
 
@@ -1893,6 +1977,8 @@ export async function resetFiltros() {
   filterEnOferta.value = false
   diasUmbralVencimientoPreset.value = 14
   diasUmbralVencimiento.value = 14
+  ordenStock.value = 'reciente'
+  ordenCatalogo.value = 'reciente'
   if (selectedEstadoRegistro.value !== 'ACTIVOS') {
     selectedEstadoRegistro.value = 'ACTIVOS'
     await recargarTodo()

@@ -179,6 +179,7 @@
 /* Cuerpo del modal y formularios */
 .inv-modal-body,
 .prov-modal-body,
+.modal-body,
 .modal-form,
 .modal-body-confirm {
   padding: 1.25rem 1.5rem;

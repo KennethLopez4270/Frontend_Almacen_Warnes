@@ -30,6 +30,15 @@ const {
   abrirModalDetalle,
   cerrarModalDetalle,
 
+  modalGenerarVisible,
+  generandoReporte,
+  errorGenerar,
+  formGenerar,
+  seleccionarTipoPeriodo,
+  abrirModalGenerar,
+  cerrarModalGenerar,
+  confirmarGenerarReporte,
+
   exportarExcelReportes,
   exportarPdfReportes,
   descargarComprobantePdf,
@@ -72,6 +81,19 @@ const {
           </svg>
           <span>{{ authStore.sucursalNombre || 'Sucursal Central' }}</span>
         </div>
+
+        <button
+          type="button"
+          class="btn-primary"
+          title="Generar reporte financiero consolidado de auditoría por período"
+          @click="abrirModalGenerar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Generar Reporte</span>
+        </button>
 
         <router-link to="/caja/arqueo" class="btn-secondary" style="text-decoration: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
@@ -426,7 +448,7 @@ const {
             <h3 class="modal-title">
               Detalle Auditado - Reporte #REP-{{ reporteDetalle?.reporteId || '...' }}
             </h3>
-            <p class="text-xs text-muted" style="margin: 0.15rem 0 0 0;">
+            <p class="modal-subtitle">
               Sucursal: {{ reporteDetalle?.nombreSucursal ? `${reporteDetalle.nombreSucursal} (${reporteDetalle.codigoSucursal})` : (reporteDetalle?.codigoSucursal || '-') }} &bull; Cajero: {{ reporteDetalle?.nombreUsuario }}
             </p>
           </div>
@@ -726,6 +748,161 @@ const {
 
           <button type="button" class="btn-primary" @click="cerrarModalDetalle">
             Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL GENERAR REPORTE DE PERÍODO -->
+    <div v-if="modalGenerarVisible" class="modal-backdrop" @click.self="cerrarModalGenerar">
+      <div class="modal-card" style="max-width: 580px;">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Generar Reporte de Período</h3>
+            <p class="modal-subtitle">
+              Consolidación financiera y auditoría contable por rango de fechas
+            </p>
+          </div>
+          <button type="button" class="btn-close-modal" @click="cerrarModalGenerar">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div v-if="errorGenerar" class="alert alert-danger" style="margin-bottom: 0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-icon">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{{ errorGenerar }}</span>
+          </div>
+
+          <!-- SUCURSAL -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">
+              Sucursal <span class="required">*</span>
+            </label>
+            <select
+              v-if="esPropietario"
+              v-model="formGenerar.sucursalId"
+              class="form-select"
+              required
+            >
+              <option
+                v-for="s in listaSucursales"
+                :key="'gen-suc-' + s.sucursalId"
+                :value="s.sucursalId"
+              >
+                {{ s.ciudad }} ({{ s.codigoInterno }})
+              </option>
+            </select>
+            <input
+              v-else
+              type="text"
+              class="form-control"
+              :value="`${authStore.sucursalNombre || 'Sucursal Asignada'} (Suc. #${authStore.sucursalId || 1})`"
+              disabled
+              style="background-color: var(--erp-bg-muted); color: var(--erp-text-main);"
+            />
+          </div>
+
+          <!-- TIPO DE PERÍODO -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Tipo de Período</label>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.2rem;">
+              <button
+                type="button"
+                class="lm-shortcut-btn"
+                :class="{ active: formGenerar.periodo === 'Diario' }"
+                style="text-align: center; justify-content: center; padding: 0.45rem 0.5rem;"
+                @click="seleccionarTipoPeriodo('Diario')"
+              >
+                Diario
+              </button>
+              <button
+                type="button"
+                class="lm-shortcut-btn"
+                :class="{ active: formGenerar.periodo === 'Semanal' }"
+                style="text-align: center; justify-content: center; padding: 0.45rem 0.5rem;"
+                @click="seleccionarTipoPeriodo('Semanal')"
+              >
+                Semanal
+              </button>
+              <button
+                type="button"
+                class="lm-shortcut-btn"
+                :class="{ active: formGenerar.periodo === 'Mensual' }"
+                style="text-align: center; justify-content: center; padding: 0.45rem 0.5rem;"
+                @click="seleccionarTipoPeriodo('Mensual')"
+              >
+                Mensual
+              </button>
+              <button
+                type="button"
+                class="lm-shortcut-btn"
+                :class="{ active: formGenerar.periodo === 'Personalizado' }"
+                style="text-align: center; justify-content: center; padding: 0.45rem 0.5rem;"
+                @click="seleccionarTipoPeriodo('Personalizado')"
+              >
+                Personalizado
+              </button>
+            </div>
+          </div>
+
+          <!-- RANGO DE FECHAS Y HORAS -->
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">
+                Fecha y Hora Inicio <span class="required">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                step="1"
+                v-model="formGenerar.fechaInicio"
+                class="form-control"
+                :disabled="formGenerar.periodo !== 'Personalizado'"
+                required
+              />
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">
+                Fecha y Hora Fin <span class="required">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                step="1"
+                v-model="formGenerar.fechaFin"
+                class="form-control"
+                :disabled="formGenerar.periodo !== 'Personalizado'"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- CALLOUT INFORMATIVO -->
+          <div class="info-callout" style="margin-bottom: 0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-icon">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span style="font-size: var(--erp-font-xs); line-height: 1.45;">
+              Se consolidarán todas las ventas y movimientos registrados en la sucursal dentro del intervalo elegido sin afectar las sesiones abiertas ni modificar arqueos individuales.
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" :disabled="generandoReporte" @click="cerrarModalGenerar">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            :disabled="generandoReporte"
+            @click="confirmarGenerarReporte"
+          >
+            <div v-if="generandoReporte" class="spinner-small" style="margin-right: 0.4rem;"></div>
+            <span>{{ generandoReporte ? 'Generando...' : 'Generar y Auditar' }}</span>
           </button>
         </div>
       </div>

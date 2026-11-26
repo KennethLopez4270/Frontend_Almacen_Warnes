@@ -286,3 +286,37 @@
   color: #ffffff;
   border-color: #059669;
 }
+
+/* Cabeceras de tabla ordenables y controles de orden */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: var(--erp-transition-fast);
+}
+
+.th-sortable:hover {
+  background-color: var(--erp-bg-hover) !important;
+  color: var(--erp-text-main) !important;
+}
+
+.th-sort-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sort-indicator {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.sort-indicator.asc,
+.sort-indicator.desc {
+  color: var(--erp-primary);
+  font-weight: 700;
+}
+
+.sort-indicator.neutral {
+  color: var(--erp-text-subtle);
+  opacity: 0.6;
+}

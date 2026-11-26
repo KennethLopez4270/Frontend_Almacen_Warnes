@@ -562,11 +562,11 @@ const {
         </div>
 
         <div class="modal-body">
-          <p class="text-sm text-muted" style="margin-top: 0;">
+          <p class="modal-desc" style="margin: 0; line-height: 1.5;">
             Se generará un reporte de corte atómico en la base de datos y se sellarán todos los movimientos de caja registrados durante esta sesión laboral.
           </p>
 
-          <div class="arq-callout-box" style="margin-bottom: 1rem;">
+          <div class="arq-callout-box" style="margin-bottom: 0;">
             <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.35rem;">
               <span class="text-muted">Total Entradas:</span>
               <strong class="font-mono" style="color: var(--erp-success);">{{ formatearMonto(totalEntradasFinal) }}</strong>
@@ -581,13 +581,13 @@ const {
             </div>
           </div>
 
-          <div v-if="!esCajero" style="margin-top: 0.75rem;">
+          <div v-if="!esCajero" style="margin-top: 0;">
             <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.825rem; color: var(--erp-text-secondary); cursor: pointer;">
               <input v-model="permanecerEnSistema" type="checkbox" />
               <span>Permanecer en el sistema e ir al Libro Mayor (no cerrar sesión general)</span>
             </label>
           </div>
-          <div v-else class="alert alert-warning" style="margin-bottom: 0;">
+          <div v-else class="alert alert-warning" style="margin: 0;">
             Al confirmar el arqueo como cajero, se cerrará automáticamente su sesión y volverá a la pantalla de inicio.
           </div>
         </div>
@@ -622,11 +622,16 @@ const {
         </div>
 
         <div class="modal-body">
-          <p class="text-sm text-muted" style="margin-top: 0;">
+          <p class="modal-desc" style="margin: 0; line-height: 1.5;">
             Si omite el arqueo formal, su turno laboral se marcará como cerrado pero <strong>no se creará un reporte de corte auditado ni se consolidarán las partidas declaradas</strong>.
           </p>
-          <div class="alert alert-danger" style="margin-bottom: 0;">
-            Se cerrará su sesión de trabajo inmediatamente.
+          <div class="alert alert-danger" style="margin: 0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-icon">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>Se cerrará su sesión de trabajo inmediatamente.</span>
           </div>
         </div>
 

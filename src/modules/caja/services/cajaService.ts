@@ -243,6 +243,13 @@ export interface FiltrosReportes {
   usuarioId?: number
 }
 
+export interface GenerarReportePeriodoPayload {
+  sucursalId?: number
+  periodo: string
+  fechaInicio: string
+  fechaFin: string
+}
+
 // ====================================================================
 // SERVICIO PRINCIPAL
 // ====================================================================
@@ -309,6 +316,13 @@ export const cajaService = {
 
   async obtenerDetalleReporte(id: number): Promise<ReporteDetalleDTO> {
     const res = await apiCaja.get<ReporteDetalleDTO>(`/reportes/${id}`)
+    return res.data
+  },
+
+  async generarReportePeriodo(
+    payload: GenerarReportePeriodoPayload
+  ): Promise<{ mensaje: string; reporteId: number; reporte: ReporteDetalleDTO }> {
+    const res = await apiCaja.post('/reportes/generar-corte', payload)
     return res.data
   },
 }

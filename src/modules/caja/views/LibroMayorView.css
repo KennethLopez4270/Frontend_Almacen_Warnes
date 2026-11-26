@@ -70,7 +70,8 @@
   transition: var(--erp-transition-fast);
 }
 
-.lm-shortcut-btn:hover {
+.lm-shortcut-btn:hover,
+.lm-shortcut-btn.active {
   background-color: var(--erp-primary);
   color: #ffffff;
   border-color: var(--erp-primary);

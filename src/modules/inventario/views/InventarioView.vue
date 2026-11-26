@@ -12,7 +12,8 @@ import {
   modalConfirmacion, cerrarModalConfirmacion, ejecutarAccionConfirmacion,
   catalogoActivo, asegurarDatosActivosModal, alCambiarSucursalRecepcion,
   listaSucursales, sucursalSeleccionadaId, sucursalActivaId, cambiarSucursalFiltro,
-  historialMovimientos, cargandoHistorial, filtroHistorialProducto, filtroHistorialTipo, busquedaHistorial, historialFiltrado, recargarHistorial
+  historialMovimientos, cargandoHistorial, filtroHistorialProducto, filtroHistorialTipo, busquedaHistorial, historialFiltrado, recargarHistorial,
+  ordenStock, ordenCatalogo, alternarOrdenStock, alternarOrdenCatalogo
 } from './InventarioView'
 
 const sucursalActivaNombre = computed(() => {
@@ -402,6 +403,35 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           <option value="TODOS">Todos</option>
         </select>
 
+        <!-- Ordenamiento reactivo Tab 1 (Stock Físico por Lotes) -->
+        <select
+          v-if="activeTab === 'stock'"
+          v-model="ordenStock"
+          class="inv-filter-select font-semibold"
+          title="Ordenar listado de stock físico por lotes"
+        >
+          <option value="reciente">Orden: Más recientes</option>
+          <option value="stock-desc">Orden: Mayor stock</option>
+          <option value="stock-asc">Orden: Menor stock</option>
+          <option value="nombre-asc">Orden: Nombre (A - Z)</option>
+          <option value="nombre-desc">Orden: Nombre (Z - A)</option>
+          <option value="vencimiento-asc">Orden: Vence antes</option>
+        </select>
+
+        <!-- Ordenamiento reactivo Tab 3 (Catálogo Maestro) -->
+        <select
+          v-if="activeTab === 'catalogo'"
+          v-model="ordenCatalogo"
+          class="inv-filter-select font-semibold"
+          title="Ordenar listado del catálogo maestro de productos"
+        >
+          <option value="reciente">Orden: Más recientes</option>
+          <option value="stock-desc">Orden: Mayor stock total</option>
+          <option value="stock-asc">Orden: Menor stock total</option>
+          <option value="nombre-asc">Orden: Nombre (A - Z)</option>
+          <option value="nombre-desc">Orden: Nombre (Z - A)</option>
+        </select>
+
         <!-- Filtro Estado Pendiente (Pills de Auditoría) -->
         <div v-if="activeTab === 'espera'" class="inv-filter-status-pills">
           <button
@@ -515,7 +545,7 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
 
         <!-- Boton Reset Filtros -->
         <button
-          v-if="activeTab !== 'kardex' && (searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer || filterEnOferta || selectedEstadoRegistro !== 'ACTIVOS')"
+          v-if="activeTab !== 'kardex' && (searchQuery || selectedCategoria !== '' || selectedProveedor !== '' || selectedEstadoProducto !== '' || filterProximosVencer || filterEnOferta || selectedEstadoRegistro !== 'ACTIVOS' || (activeTab === 'stock' && ordenStock !== 'reciente') || (activeTab === 'catalogo' && ordenCatalogo !== 'reciente'))"
           type="button"
           class="inv-btn-reset-filters"
           @click="resetFiltros"
@@ -537,12 +567,32 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
             <thead>
               <tr>
                 <th style="width: 140px">Cód. Interno / Barras</th>
-                <th>Producto y Categoría</th>
-                <th>Detalle Lote / Proveedor</th>
+                <th class="th-sortable" @click="alternarOrdenStock('nombre')" title="Clic para alternar orden alfabético por nombre">
+                  <div class="th-sort-inner">
+                    <span>Producto y Categoría</span>
+                    <span v-if="ordenStock === 'nombre-asc'" class="sort-indicator asc">▲</span>
+                    <span v-else-if="ordenStock === 'nombre-desc'" class="sort-indicator desc">▼</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
+                <th class="th-sortable" @click="alternarOrdenStock('reciente')" title="Clic para ordenar por lotes más recientes">
+                  <div class="th-sort-inner">
+                    <span>Detalle Lote / Proveedor</span>
+                    <span v-if="ordenStock === 'reciente'" class="sort-indicator desc">▼</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
                 <th style="width: 170px">Fecha Vencimiento</th>
                 <th class="text-right" style="width: 130px">Costo Unit. / Total</th>
                 <th class="text-right" style="width: 150px">Precio Venta / Oferta</th>
-                <th class="text-center" style="width: 110px">Stock Disp.</th>
+                <th class="text-center th-sortable" style="width: 110px" @click="alternarOrdenStock('stock')" title="Clic para alternar orden por cantidad de stock">
+                  <div class="th-sort-inner" style="justify-content: center;">
+                    <span>Stock Disp.</span>
+                    <span v-if="ordenStock === 'stock-desc'" class="sort-indicator desc">▼</span>
+                    <span v-else-if="ordenStock === 'stock-asc'" class="sort-indicator asc">▲</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
                 <th class="text-center" style="width: 110px">Acciones</th>
               </tr>
             </thead>
@@ -1066,12 +1116,32 @@ watch(usuarioActivoId, async (nuevoId, anteriorId) => {
           <table class="inv-table">
             <thead>
               <tr>
-                <th style="width: 140px">Cód. Interno / Barras</th>
-                <th>Nombre del Producto</th>
+                <th class="th-sortable" style="width: 140px" @click="alternarOrdenCatalogo('reciente')" title="Clic para ordenar por más recientes">
+                  <div class="th-sort-inner">
+                    <span>Cód. Interno / Barras</span>
+                    <span v-if="ordenCatalogo === 'reciente'" class="sort-indicator desc">▼</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
+                <th class="th-sortable" @click="alternarOrdenCatalogo('nombre')" title="Clic para alternar orden alfabético por nombre">
+                  <div class="th-sort-inner">
+                    <span>Nombre del Producto</span>
+                    <span v-if="ordenCatalogo === 'nombre-asc'" class="sort-indicator asc">▲</span>
+                    <span v-else-if="ordenCatalogo === 'nombre-desc'" class="sort-indicator desc">▼</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
                 <th>Categoría</th>
                 <th class="text-right" style="width: 130px">Costo Ref. (Compra)</th>
                 <th class="text-right" style="width: 130px">Precio Venta (Góndola)</th>
-                <th class="text-center" style="width: 130px">Stock Total Activo</th>
+                <th class="text-center th-sortable" style="width: 130px" @click="alternarOrdenCatalogo('stock')" title="Clic para alternar orden por stock total activo">
+                  <div class="th-sort-inner" style="justify-content: center;">
+                    <span>Stock Total Activo</span>
+                    <span v-if="ordenCatalogo === 'stock-desc'" class="sort-indicator desc">▼</span>
+                    <span v-else-if="ordenCatalogo === 'stock-asc'" class="sort-indicator asc">▲</span>
+                    <span v-else class="sort-indicator neutral">⇅</span>
+                  </div>
+                </th>
                 <th class="text-center" style="width: 160px">Estado Comercial</th>
                 <th class="text-center" style="width: 100px">Acciones</th>
               </tr>

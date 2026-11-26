@@ -191,6 +191,118 @@ export function useLibroMayor() {
   }
 
   // ====================================================================
+  // MODAL GENERAR REPORTE DE PERÍODO (CORTE CONSOLIDADO)
+  // ====================================================================
+  const modalGenerarVisible = ref(false)
+  const generandoReporte = ref(false)
+  const errorGenerar = ref<string | null>(null)
+
+  const formGenerar = reactive<{
+    sucursalId?: number
+    periodo: 'Diario' | 'Semanal' | 'Mensual' | 'Personalizado'
+    fechaInicio: string
+    fechaFin: string
+  }>({
+    sucursalId: undefined,
+    periodo: 'Diario',
+    fechaInicio: '',
+    fechaFin: '',
+  })
+
+  function formatearLocalIso(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  }
+
+  function seleccionarTipoPeriodo(tipo: 'Diario' | 'Semanal' | 'Mensual' | 'Personalizado') {
+    formGenerar.periodo = tipo
+    const hoy = new Date()
+
+    if (tipo === 'Diario') {
+      const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
+      const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+      formGenerar.fechaInicio = formatearLocalIso(inicio)
+      formGenerar.fechaFin = formatearLocalIso(fin)
+    } else if (tipo === 'Semanal') {
+      const dayOfWeek = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1 // Lunes = 0
+      const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - dayOfWeek, 0, 0, 0)
+      const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+      formGenerar.fechaInicio = formatearLocalIso(lunes)
+      formGenerar.fechaFin = formatearLocalIso(fin)
+    } else if (tipo === 'Mensual') {
+      const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1, 0, 0, 0)
+      const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+      formGenerar.fechaInicio = formatearLocalIso(primerDia)
+      formGenerar.fechaFin = formatearLocalIso(fin)
+    } else if (tipo === 'Personalizado') {
+      if (!formGenerar.fechaInicio || !formGenerar.fechaFin) {
+        const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0)
+        const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+        formGenerar.fechaInicio = formatearLocalIso(inicio)
+        formGenerar.fechaFin = formatearLocalIso(fin)
+      }
+    }
+  }
+
+  function abrirModalGenerar() {
+    formGenerar.sucursalId = esPropietario.value
+      ? (authStore.sucursalId || (listaSucursales.value[0]?.sucursalId ?? 1))
+      : (authStore.sucursalId || 1)
+    seleccionarTipoPeriodo('Diario')
+    errorGenerar.value = null
+    modalGenerarVisible.value = true
+  }
+
+  function cerrarModalGenerar() {
+    modalGenerarVisible.value = false
+    generandoReporte.value = false
+    errorGenerar.value = null
+  }
+
+  async function confirmarGenerarReporte() {
+    if (!formGenerar.sucursalId) {
+      errorGenerar.value = 'Debe seleccionar una sucursal para generar el reporte.'
+      return
+    }
+    if (!formGenerar.fechaInicio || !formGenerar.fechaFin) {
+      errorGenerar.value = 'Debe especificar el rango completo de fechas y horas.'
+      return
+    }
+    if (new Date(formGenerar.fechaInicio) > new Date(formGenerar.fechaFin)) {
+      errorGenerar.value = 'La fecha y hora de inicio no puede ser posterior a la fecha de fin.'
+      return
+    }
+
+    generandoReporte.value = true
+    errorGenerar.value = null
+
+    try {
+      const res = await cajaService.generarReportePeriodo({
+        sucursalId: Number(formGenerar.sucursalId),
+        periodo: formGenerar.periodo,
+        fechaInicio: formGenerar.fechaInicio,
+        fechaFin: formGenerar.fechaFin,
+      })
+
+      modalGenerarVisible.value = false
+      mensajeExito.value = res.mensaje || `Reporte de período #${res.reporteId} generado exitosamente.`
+      setTimeout(() => {
+        mensajeExito.value = null
+      }, 5000)
+
+      await cargarReportes()
+
+      if (res.reporteId) {
+        await abrirModalDetalle(res.reporteId)
+      }
+    } catch (err: any) {
+      errorGenerar.value = err.userMessage || 'Error al generar el reporte de período.'
+    } finally {
+      generandoReporte.value = false
+    }
+  }
+
+  // ====================================================================
   // EXPORTACIÓN A EXCEL (.XLSX)
   // ====================================================================
   function exportarExcelReportes() {
@@ -664,6 +776,15 @@ export function useLibroMayor() {
     pestanaDetalle,
     abrirModalDetalle,
     cerrarModalDetalle,
+
+    modalGenerarVisible,
+    generandoReporte,
+    errorGenerar,
+    formGenerar,
+    seleccionarTipoPeriodo,
+    abrirModalGenerar,
+    cerrarModalGenerar,
+    confirmarGenerarReporte,
 
     exportarExcelReportes,
     exportarPdfReportes,
