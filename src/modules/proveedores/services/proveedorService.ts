@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 // Cliente Axios dedicado para la API de Proveedores
 const apiProveedores = axios.create({
@@ -10,6 +10,8 @@ const apiProveedores = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiProveedores, true)
 
 // Interceptor de respuesta para normalizar errores (RAISE EXCEPTION de PostgreSQL / Spring Boot)
 apiProveedores.interceptors.response.use(

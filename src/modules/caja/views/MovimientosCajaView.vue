@@ -6,12 +6,17 @@ const {
   authStore,
   cargando,
   guardando,
+  consolidando,
   error,
   mensajeExito,
   movimientos,
+  movimientosPendientes,
+  movimientosPorConsolidar,
+  selectedMovimientoIds,
+  todosSeleccionados,
   sucursales,
   filtroTipo,
-  filtroSoloPendientes,
+  filtroEstado,
   filtroSucursal,
   filtroFechaDesde,
   filtroFechaHasta,
@@ -24,6 +29,11 @@ const {
   METODOS_CONCEPTO,
   cargarMovimientos,
   limpiarFiltros,
+  toggleSeleccionarTodos,
+  toggleSeleccionarFila,
+  consolidarUno,
+  consolidarSeleccionados,
+  consolidarPendientesDirectos,
   abrirModalCrear,
   guardarNuevoMovimiento,
   abrirModalEditar,
@@ -55,7 +65,25 @@ const {
         </div>
       </div>
 
-      <div class="topbar-right">
+      <div class="topbar-right" style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <button
+          v-if="!authStore.isCajero && selectedMovimientoIds.length > 0"
+          type="button"
+          class="btn-secondary"
+          :disabled="consolidando"
+          @click="consolidarSeleccionados"
+        >
+          {{ consolidando ? 'Consolidando...' : `Consolidar Seleccionados (${selectedMovimientoIds.length})` }}
+        </button>
+        <button
+          v-else-if="!authStore.isCajero && movimientosPorConsolidar.length > 0"
+          type="button"
+          class="btn-secondary"
+          :disabled="consolidando"
+          @click="consolidarPendientesDirectos"
+        >
+          {{ consolidando ? 'Consolidando...' : `Consolidar Pendientes (${movimientosPorConsolidar.length})` }}
+        </button>
         <button type="button" class="btn-primary" @click="abrirModalCrear">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -118,11 +146,14 @@ const {
           />
         </div>
 
-        <!-- Checkbox solo pendientes -->
-        <label style="display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: var(--erp-font-xs); font-weight: 600; color: var(--erp-text-secondary); margin-left: 0.25rem;">
-          <input v-model="filtroSoloPendientes" type="checkbox" @change="cargarMovimientos" />
-          <span>Solo pendientes (sin sellar)</span>
-        </label>
+        <!-- Filtro de Estado -->
+        <div class="form-group mb-0" style="min-width: 195px;">
+          <select v-model="filtroEstado" class="filter-select" @change="cargarMovimientos">
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTES">Pendientes / Por consolidar</option>
+            <option value="CONSOLIDADOS">Consolidados</option>
+          </select>
+        </div>
       </div>
 
       <div class="filter-right" style="display: flex; gap: 0.5rem; align-items: center;">
@@ -155,6 +186,15 @@ const {
         <table class="data-table">
           <thead>
             <tr>
+              <th v-if="!authStore.isCajero" style="width: 38px; text-align: center;">
+                <input
+                  type="checkbox"
+                  :checked="todosSeleccionados"
+                  :disabled="movimientosPendientes.length === 0"
+                  title="Seleccionar todos los movimientos pendientes"
+                  @change="toggleSeleccionarTodos"
+                />
+              </th>
               <th style="width: 75px;">ID</th>
               <th style="width: 165px;">Fecha y Hora</th>
               <th style="width: 120px;">Tipo</th>
@@ -162,12 +202,21 @@ const {
               <th>Detalle / Descripción</th>
               <th style="width: 130px; text-align: right;">Monto</th>
               <th style="width: 160px;">Registrado Por</th>
-              <th style="width: 140px; text-align: center;">Estado</th>
-              <th style="width: 90px; text-align: center;">Acciones</th>
+              <th style="width: 155px; text-align: center;">Estado</th>
+              <th style="width: 120px; text-align: center;">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="m in movimientos" :key="m.movimientoId">
+              <td v-if="!authStore.isCajero" style="text-align: center;">
+                <input
+                  v-if="!m.sellado"
+                  type="checkbox"
+                  :checked="selectedMovimientoIds.includes(m.movimientoId)"
+                  title="Seleccionar para consolidar"
+                  @change="toggleSeleccionarFila(m.movimientoId)"
+                />
+              </td>
               <td class="cell-id font-mono">#{{ m.movimientoId }}</td>
               <td class="cell-sub">{{ formatearFecha(m.fechaCreacion) }}</td>
               <td>
@@ -186,15 +235,42 @@ const {
               </td>
               <td class="cell-sub">{{ m.nombreUsuario }}</td>
               <td style="text-align: center;">
-                <span v-if="m.sellado" class="kpi-badge info" :title="`Sellado en Reporte #${m.reporteId}`">
-                  Sellado (R-{{ m.reporteId }})
+                <span
+                  v-if="m.sellado"
+                  class="kpi-badge info"
+                  :title="`Consolidado en Reporte #${m.reporteId} de Libro Mayor`"
+                >
+                  Consolidado (R-{{ m.reporteId }})
                 </span>
-                <span v-else class="kpi-badge warning">
-                  Pendiente
+                <span
+                  v-else-if="m.requiereConsolidacion"
+                  class="kpi-badge warning"
+                  :title="m.rolUsuario === 1 ? 'El turno del cajero cerró sin arqueo — requiere consolidación en Libro Mayor' : 'Movimiento administrativo — pendiente de consolidar en Libro Mayor'"
+                >
+                  {{ m.rolUsuario === 1 ? 'Sin Arqueo' : 'Por Consolidar' }}
+                </span>
+                <span
+                  v-else
+                  class="kpi-badge neutral"
+                  title="Pendiente en turno activo del cajero — se consolidará en su arqueo"
+                >
+                  En Turno
                 </span>
               </td>
               <td style="text-align: center;">
                 <div v-if="!m.sellado" class="td-actions" style="justify-content: center;">
+                  <button
+                    v-if="!authStore.isCajero"
+                    type="button"
+                    class="action-btn"
+                    title="Consolidar en Libro Mayor"
+                    :disabled="consolidando"
+                    @click="consolidarUno(m)"
+                  >
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
                   <button type="button" class="action-btn" title="Modificar movimiento" @click="abrirModalEditar(m)">
                     <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -208,7 +284,7 @@ const {
                     </svg>
                   </button>
                 </div>
-                <span v-else class="cell-sub" title="Inmutable tras arqueo">&mdash;</span>
+                <span v-else class="cell-sub" title="Consolidado en Libro Mayor">&mdash;</span>
               </td>
             </tr>
           </tbody>
@@ -262,6 +338,16 @@ const {
               <label class="form-label">Detalle o Motivo <span class="required">*</span></label>
               <input v-model="formCrear.detalle" maxlength="40" class="form-control" placeholder="Ej: Pago de flete a distribuidor" required />
               <span class="cell-sub" style="font-size: 0.75rem; color: var(--erp-text-muted); margin-top: 0.2rem;">{{ (formCrear.detalle || '').length }}/40 caracteres</span>
+            </div>
+
+            <div v-if="!authStore.isCajero" class="form-group mb-0" style="margin-top: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: var(--erp-font-xs); font-weight: 600; color: var(--erp-text-primary);">
+                <input v-model="formCrear.consolidarDirecto" type="checkbox" />
+                <span>Consolidar directamente en Libro Mayor</span>
+              </label>
+              <span class="cell-sub" style="display: block; font-size: 0.72rem; color: var(--erp-text-muted); margin-top: 0.2rem;">
+                Como no realiza arqueo de turno, active esta opción para registrarlo ya consolidado.
+              </span>
             </div>
           </div>
 
@@ -336,7 +422,7 @@ const {
             <div class="cell-bold">#{{ movimientoSeleccionado?.movimientoId }} &bull; {{ movimientoSeleccionado?.detalle }}</div>
             <span class="cell-sub font-mono">Monto: {{ formatearMonto(movimientoSeleccionado?.monto) }}</span>
           </div>
-          <p class="cell-sub">Esta acción solo puede realizarse antes de que el movimiento sea sellado en un arqueo.</p>
+          <p class="cell-sub">Esta acción solo puede realizarse antes de que el movimiento sea consolidado en Libro Mayor.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" @click="modalEliminarVisible = false">Cancelar</button>

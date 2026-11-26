@@ -4,16 +4,19 @@ import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 import {
   cargando,
   usuarios,
+  usuariosFiltrados,
   listaSucursales,
   obtenerEtiquetaSucursal,
   searchQuery,
   selectedRol,
   selectedSucursal,
+  selectedEstado,
   mostrarBajas,
   toasts,
   cerrarToast,
   cargarUsuarios,
   obtenerEstadoUsuario,
+  esUsuarioActual,
   totalUsuarios,
   totalCajeros,
   totalSupervisores,
@@ -42,6 +45,12 @@ import {
   cargandoBaja,
   abrirModalBaja,
   confirmarBaja,
+  modalEstadoVisible,
+  usuarioAEstado,
+  nuevoEstadoObjetivo,
+  cargandoEstado,
+  abrirModalEstado,
+  confirmarCambioEstado,
   formatearFecha,
   inicializarUsuarios,
   ROLES_USUARIO,
@@ -205,6 +214,15 @@ onMounted(async () => {
             </option>
           </select>
         </div>
+
+        <div class="select-wrapper">
+          <select v-model="selectedEstado" class="filter-select">
+            <option value="">Todos los Estados</option>
+            <option :value="ESTADOS_USUARIO.ACTIVO">Activo</option>
+            <option :value="ESTADOS_USUARIO.SOLICITA_RECUPERACION">Solicita Recuperación</option>
+            <option :value="ESTADOS_USUARIO.BLOQUEADO">Bloqueado</option>
+          </select>
+        </div>
       </div>
 
       <div class="filter-right">
@@ -227,7 +245,7 @@ onMounted(async () => {
         <p>Cargando lista de usuarios...</p>
       </div>
 
-      <div v-else-if="usuarios.length === 0" class="empty-state">
+      <div v-else-if="usuariosFiltrados.length === 0" class="empty-state">
         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -252,7 +270,7 @@ onMounted(async () => {
           </thead>
           <tbody>
             <tr
-              v-for="u in usuarios"
+              v-for="u in usuariosFiltrados"
               :key="u.usuarioId"
               :class="{
                 'row-alert': obtenerEstadoUsuario(u.usuarioId) === ESTADOS_USUARIO.SOLICITA_RECUPERACION
@@ -262,6 +280,9 @@ onMounted(async () => {
               <td>
                 <div class="user-cell">
                   <span class="username-pill">@{{ u.usuario }}</span>
+                  <span v-if="esUsuarioActual(u.usuarioId)" class="kpi-badge info" style="margin-left: 0.35rem; font-size: 0.68rem;">
+                    Tú
+                  </span>
                 </div>
               </td>
               <td>
@@ -317,16 +338,45 @@ onMounted(async () => {
                   @click="abrirModalPassword(u)"
                 >
                   <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
                   </svg>
                 </button>
 
-                <!-- Botón: Baja Lógica -->
+                <!-- Botón: Desbloquear cuenta (si está bloqueada) -->
+                <button
+                  v-if="obtenerEstadoUsuario(u.usuarioId) === ESTADOS_USUARIO.BLOQUEADO"
+                  type="button"
+                  class="action-btn action-btn-success"
+                  title="Desbloquear cuenta de usuario"
+                  @click="abrirModalEstado(u, ESTADOS_USUARIO.ACTIVO)"
+                >
+                  <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                </button>
+
+                <!-- Botón: Bloquear cuenta (deshabilitado para el usuario en sesión) -->
+                <button
+                  v-else
+                  type="button"
+                  class="action-btn action-btn-warning"
+                  :disabled="esUsuarioActual(u.usuarioId)"
+                  :title="esUsuarioActual(u.usuarioId) ? 'No puede bloquear su propia cuenta en sesión' : 'Bloquear cuenta de usuario'"
+                  @click="abrirModalEstado(u, ESTADOS_USUARIO.BLOQUEADO)"
+                >
+                  <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                  </svg>
+                </button>
+
+                <!-- Botón: Baja Lógica (deshabilitado para el usuario en sesión) -->
                 <button
                   type="button"
                   class="action-btn action-btn-danger"
-                  title="Dar de baja lógica"
+                  :disabled="esUsuarioActual(u.usuarioId)"
+                  :title="esUsuarioActual(u.usuarioId) ? 'No puede dar de baja su propia cuenta en sesión' : 'Dar de baja lógica'"
                   @click="abrirModalBaja(u)"
                 >
                   <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -607,6 +657,57 @@ onMounted(async () => {
           >
             <span v-if="cargandoBaja" class="spinner"></span>
             <span v-else>Sí, Dar de Baja</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. MODAL BLOQUEAR / DESBLOQUEAR USUARIO -->
+    <div v-if="modalEstadoVisible" class="modal-overlay" @click.self="modalEstadoVisible = false">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h2 class="modal-title">
+            {{ nuevoEstadoObjetivo === ESTADOS_USUARIO.BLOQUEADO ? 'Bloquear Cuenta de Usuario' : 'Desbloquear Cuenta de Usuario' }}
+          </h2>
+          <button type="button" class="btn-close-modal" @click="modalEstadoVisible = false">×</button>
+        </div>
+
+        <div class="modal-body-confirm">
+          <p v-if="nuevoEstadoObjetivo === ESTADOS_USUARIO.BLOQUEADO">
+            ¿Está seguro de bloquear el acceso al usuario
+            <strong>@{{ usuarioAEstado?.usuario }}</strong> ({{ usuarioAEstado?.nombres }} {{ usuarioAEstado?.apellidos }})?
+          </p>
+          <p v-else>
+            ¿Desea desbloquear y reactivar el acceso para el usuario
+            <strong>@{{ usuarioAEstado?.usuario }}</strong>?
+          </p>
+          <p class="confirm-note">
+            <template v-if="nuevoEstadoObjetivo === ESTADOS_USUARIO.BLOQUEADO">
+              El usuario no podrá iniciar sesión y se cerrará su turno activo si tiene uno abierto.
+            </template>
+            <template v-else>
+              La cuenta volverá al estado Activo y el usuario podrá volver a ingresar al sistema con sus credenciales.
+            </template>
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            @click="modalEstadoVisible = false"
+            :disabled="cargandoEstado"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            :class="nuevoEstadoObjetivo === ESTADOS_USUARIO.BLOQUEADO ? 'btn-danger' : 'btn-primary'"
+            :disabled="cargandoEstado"
+            @click="confirmarCambioEstado"
+          >
+            <span v-if="cargandoEstado" class="spinner"></span>
+            <span v-else>{{ nuevoEstadoObjetivo === ESTADOS_USUARIO.BLOQUEADO ? 'Sí, Bloquear Cuenta' : 'Sí, Desbloquear' }}</span>
           </button>
         </div>
       </div>

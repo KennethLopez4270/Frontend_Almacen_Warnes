@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL } from '@/config/api'
+import { API_URL, instalarInterceptorSesion } from '@/config/api'
 
 const apiUsuarios = axios.create({
   baseURL: API_URL,
@@ -8,6 +8,16 @@ const apiUsuarios = axios.create({
     Accept: 'application/json',
   },
   timeout: 15000,
+})
+
+instalarInterceptorSesion(apiUsuarios)
+
+apiUsuarios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('tw_jwt_token')
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
 })
 
 export interface UsuarioDTO {
@@ -24,6 +34,7 @@ export interface UsuarioDTO {
   rol_nombre?: string
   nombreCompleto: string
   nombre_completo?: string
+  estado?: number
   marcaBaja: boolean
   marca_baja?: boolean
 }
@@ -45,6 +56,26 @@ export const usuarioService = {
       return response.data
     } catch {
       const response = await apiUsuarios.get<UsuarioDTO>(`/usuarios/${id}`)
+      return response.data
+    }
+  },
+
+  async cambiarEstadoUsuario(
+    id: number,
+    estado: 1 | 3,
+    usuarioModificacion: number
+  ): Promise<{ mensaje: string; estado: number }> {
+    try {
+      const response = await apiUsuarios.patch<{ mensaje: string; estado: number }>(
+        `/seguridad/usuarios/${id}/estado`,
+        { estado, usuarioModificacion }
+      )
+      return response.data
+    } catch {
+      const response = await apiUsuarios.patch<{ mensaje: string; estado: number }>(
+        `/usuarios/${id}/estado`,
+        { estado, usuarioModificacion }
+      )
       return response.data
     }
   },

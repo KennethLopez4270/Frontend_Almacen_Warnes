@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 export { API_URL, URL_BASE }
 
@@ -15,6 +15,8 @@ const api = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(api)
 
 // Inyectar token JWT automáticamente
 api.interceptors.request.use((config) => {

@@ -3,7 +3,7 @@
    Design System empresarial Tienda Warnes
    ==================================================================== */
 
-/* Boton Primario (Azul Corporativo de Acción) */
+/* Boton Primario (Slate Obsidiana Corporativo) */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -26,7 +26,7 @@
   border-color: var(--erp-primary-hover);
 }
 
-/* Boton Dark / Slate (Sobrio / Inventario) */
+/* Boton Primario Modulos Inventario / Proveedores (alineado a primario) */
 .inv-btn-primary,
 .prov-btn-primary,
 .btn-dark {
@@ -35,10 +35,10 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.55rem 1rem;
-  background-color: var(--erp-dark);
+  background-color: var(--erp-primary);
   color: #ffffff;
-  border: 1px solid var(--erp-dark);
-  border-radius: var(--erp-radius-md);
+  border: 1px solid var(--erp-primary);
+  border-radius: var(--erp-radius-lg);
   font-size: var(--erp-font-base);
   font-weight: 600;
   cursor: pointer;
@@ -49,8 +49,8 @@
 .inv-btn-primary:hover:not(:disabled),
 .prov-btn-primary:hover:not(:disabled),
 .btn-dark:hover:not(:disabled) {
-  background-color: var(--erp-dark-hover);
-  border-color: var(--erp-dark-hover);
+  background-color: var(--erp-primary-hover);
+  border-color: var(--erp-primary-hover);
 }
 
 /* Boton Secundario */
@@ -217,4 +217,11 @@
 .spin-icon {
   animation: spin 1s linear infinite;
 }
+
+.btn-sm {
+  padding: 0.38rem 0.72rem;
+  font-size: var(--erp-font-xs);
+  border-radius: var(--erp-radius-md);
+}
+
 

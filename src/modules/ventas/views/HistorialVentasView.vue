@@ -207,7 +207,6 @@ onMounted(async () => {
             <option :value="null">Todos los estados</option>
             <option :value="2">Finalizada</option>
             <option :value="3">Anulada</option>
-            <option :value="1">Pendiente</option>
           </select>
         </div>
 

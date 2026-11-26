@@ -16,24 +16,27 @@ export function useArqueoCaja() {
   const router = useRouter()
   const authStore = useAuthStore()
 
+  const esCajero = computed(() => authStore.rolId === 1)
+  const esSupervisor = computed(() => authStore.rolId === 2)
+  const esPropietario = computed(() => authStore.rolId === 3)
+
   const cargando = ref(true)
   const guardando = ref(false)
+  const omitiendo = ref(false)
   const error = ref<string | null>(null)
   const resumen = ref<ArqueoResumenTurnoDTO | null>(null)
+  const sinTurnoActivo = ref(false)
 
-  // Diálogo para omitir arqueo
+  // Modales
   const modalOmitirVisible = ref(false)
-  const omitiendo = ref(false)
+  const modalConfirmarVisible = ref(false)
+  const permanecerEnSistema = ref(!esCajero.value)
 
-  // Partidas declaradas por el cajero
-  const entradasDeclaradas = ref<PartidaArqueoFila[]>([
-    { tipo: 1, monto: 0, descripcion: 'Ventas en Efectivo (Sistema)', esSistema: true, montoSistema: 0 },
-    { tipo: 2, monto: 0, descripcion: 'Ventas por QR (Digital)', esSistema: true, montoSistema: 0 },
-    { tipo: 3, monto: 0, descripcion: 'Ventas con Tarjeta (POS)', esSistema: true, montoSistema: 0 },
-  ])
+  // Partidas declaradas (las filas del sistema son de solo lectura para el cajero)
+  const entradasDeclaradas = ref<PartidaArqueoFila[]>([])
   const salidasDeclaradas = ref<PartidaArqueoFila[]>([])
 
-  // Nueva fila borrador
+  // Nuevas filas borrador editables
   const nuevaEntrada = reactive<PartidaArqueoDTO>({ tipo: 1, monto: 0, descripcion: '' })
   const nuevaSalida = reactive<PartidaArqueoDTO>({ tipo: 1, monto: 0, descripcion: '' })
 
@@ -48,11 +51,13 @@ export function useArqueoCaja() {
   async function cargarResumenTurno() {
     cargando.value = true
     error.value = null
+    sinTurnoActivo.value = false
+
     try {
       const data = await cajaService.obtenerResumenTurno()
       resumen.value = data
 
-      // Inicializar filas de ventas fijas del sistema
+      // Filas automáticas de ventas recuperadas del sistema (no editables ni eliminables)
       entradasDeclaradas.value = [
         {
           tipo: 1,
@@ -76,14 +81,20 @@ export function useArqueoCaja() {
           montoSistema: Number(data.totalVentasTarjeta) || 0,
         },
       ]
+      salidasDeclaradas.value = []
     } catch (err: any) {
-      error.value = err.userMessage || 'No se pudo cargar el resumen de la jornada.'
+      if (err.response?.status === 404 || err.message?.includes('No hay turno activo')) {
+        sinTurnoActivo.value = true
+        resumen.value = null
+      } else {
+        error.value = err.userMessage || 'No se pudo cargar el resumen de la jornada.'
+      }
     } finally {
       cargando.value = false
     }
   }
 
-  // Movimientos del turno filtrados por tipo
+  // Movimientos extra-venta registrados en el turno
   const movimientosEntradaList = computed(() =>
     (resumen.value?.movimientosDetalle || []).filter((m) => m.tipo_movimiento === 1)
   )
@@ -105,15 +116,16 @@ export function useArqueoCaja() {
   const movSalidasTurno = computed(() => Number(resumen.value?.totalMovimientosSalida) || 0)
   const totalSalidasFinal = computed(() => sumaSalidasDeclaradas.value + movSalidasTurno.value)
 
-  // Utilidad / Saldo neto del arqueo
+  // Balance y Diferencia de Arqueo:
+  // Esperado en sistema = Ventas del POS + Movimientos de Entrada ya registrados en caja
+  // Así solo se refleja Sobrante/Faltante si existen entradas adicionales o desajuste real.
   const utilidadArqueo = computed(() => totalEntradasFinal.value - totalSalidasFinal.value)
-
-  // Ventas esperadas en sistema
   const totalVentasEsperadas = computed(() => Number(resumen.value?.totalVentasGeneral) || 0)
-  const diferenciaVentas = computed(() => totalEntradasFinal.value - totalVentasEsperadas.value)
+  const totalEsperadoSistema = computed(() => totalVentasEsperadas.value + movEntradasTurno.value)
+  const diferenciaVentas = computed(() => totalEntradasFinal.value - totalEsperadoSistema.value)
 
   function agregarEntrada() {
-    if (!nuevaEntrada.monto || nuevaEntrada.monto <= 0) return
+    if (!nuevaEntrada.monto || Number(nuevaEntrada.monto) <= 0) return
     entradasDeclaradas.value.push({
       tipo: nuevaEntrada.tipo,
       monto: Number(nuevaEntrada.monto),
@@ -130,11 +142,11 @@ export function useArqueoCaja() {
   }
 
   function agregarSalida() {
-    if (!nuevaSalida.monto || nuevaSalida.monto <= 0) return
+    if (!nuevaSalida.monto || Number(nuevaSalida.monto) <= 0) return
     salidasDeclaradas.value.push({
       tipo: nuevaSalida.tipo,
       monto: Number(nuevaSalida.monto),
-      descripcion: (nuevaSalida.descripcion || '').trim().slice(0, 40) || 'Egreso declarado',
+      descripcion: (nuevaSalida.descripcion || '').trim().slice(0, 40) || 'Egreso / Retiro declarado',
       esSistema: false,
     })
     nuevaSalida.monto = 0
@@ -143,6 +155,11 @@ export function useArqueoCaja() {
 
   function eliminarSalida(index: number) {
     salidasDeclaradas.value.splice(index, 1)
+  }
+
+  function abrirConfirmacionArqueo() {
+    permanecerEnSistema.value = !esCajero.value
+    modalConfirmarVisible.value = true
   }
 
   async function confirmarArqueoYCerrar() {
@@ -188,9 +205,14 @@ export function useArqueoCaja() {
         periodo: 'Turno',
       })
 
-      // Limpiar sesión local y redirigir
-      authStore.logout()
-      router.push('/')
+      modalConfirmarVisible.value = false
+
+      if (permanecerEnSistema.value) {
+        router.push('/caja/libro-mayor')
+      } else {
+        authStore.logout()
+        router.push('/')
+      }
     } catch (err: any) {
       error.value = err.userMessage || 'Error al registrar el arqueo de caja.'
     } finally {
@@ -212,7 +234,7 @@ export function useArqueoCaja() {
     }
   }
 
-  function formatearFecha(fechaStr?: string | null): string {
+  function formatearFechaHora(fechaStr?: string | null): string {
     if (!fechaStr) return '-'
     const d = new Date(fechaStr)
     return d.toLocaleString('es-BO', {
@@ -235,12 +257,18 @@ export function useArqueoCaja() {
 
   return {
     authStore,
+    esCajero,
+    esSupervisor,
+    esPropietario,
     cargando,
     guardando,
     omitiendo,
     error,
     resumen,
+    sinTurnoActivo,
     modalOmitirVisible,
+    modalConfirmarVisible,
+    permanecerEnSistema,
     entradasDeclaradas,
     salidasDeclaradas,
     nuevaEntrada,
@@ -261,9 +289,10 @@ export function useArqueoCaja() {
     eliminarEntrada,
     agregarSalida,
     eliminarSalida,
+    abrirConfirmacionArqueo,
     confirmarArqueoYCerrar,
     ejecutarOmitirArqueo,
-    formatearFecha,
+    formatearFechaHora,
     formatearMonto,
     cargarResumenTurno,
   }

@@ -1,13 +1,10 @@
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { useAuthStore } from '@/stores/auth'
 import {
   cajaService,
-  type ArqueoResumenTurnoDTO,
-  type PartidaArqueoDTO,
   type ReporteListadoDTO,
   type ReporteDetalleDTO,
   type FiltrosReportes,
@@ -15,32 +12,8 @@ import {
 import { sucursalService, type SucursalDTO } from '@/modules/configuracion/services/sucursalService'
 import { usuarioService, type UsuarioDTO } from '@/services/usuarioService'
 
-export interface PartidaArqueoFila extends PartidaArqueoDTO {
-  esSistema?: boolean
-  montoSistema?: number
-}
-
-export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
-  const router = useRouter()
-  const route = useRoute()
+export function useLibroMayor() {
   const authStore = useAuthStore()
-
-  // ====================================================================
-  // NAVEGACIÓN ENTRE PESTAÑAS (ARQUEO Y REPORTES)
-  // ====================================================================
-  const tabQuery = (route.query.tab as string)?.toLowerCase()
-  const tabDefault = tabInicialParam || (tabQuery === 'reportes' ? 'reportes' : 'arqueo')
-  const pestanaActiva = ref<'arqueo' | 'reportes'>(tabDefault)
-
-  function cambiarPestana(tab: 'arqueo' | 'reportes') {
-    pestanaActiva.value = tab
-    router.replace({
-      query: { ...route.query, tab },
-    })
-    if (tab === 'reportes' && listaReportes.value.length === 0) {
-      cargarReportes()
-    }
-  }
 
   // ====================================================================
   // ESTADOS GENERALES, SUCURSALES Y USUARIOS
@@ -55,227 +28,7 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
   const esPropietario = computed(() => authStore.rolId === 3)
 
   // ====================================================================
-  // PESTAÑA 1: ARQUEO DE CAJA DEL TURNO
-  // ====================================================================
-  const cargandoArqueo = ref(false)
-  const guardandoArqueo = ref(false)
-  const omitiendoArqueo = ref(false)
-  const errorArqueo = ref<string | null>(null)
-  const resumenTurno = ref<ArqueoResumenTurnoDTO | null>(null)
-  const sinTurnoActivo = ref(false)
-
-  // Diálogo para omitir arqueo
-  const modalOmitirVisible = ref(false)
-  // Diálogo para confirmar arqueo
-  const modalConfirmarVisible = ref(false)
-  const permanecerEnSistema = ref(!esCajero.value)
-
-  // Partidas declaradas por el cajero
-  const entradasDeclaradas = ref<PartidaArqueoFila[]>([])
-  const salidasDeclaradas = ref<PartidaArqueoFila[]>([])
-
-  // Nuevas partidas borrador
-  const nuevaEntrada = reactive<PartidaArqueoDTO>({ tipo: 1, monto: 0, descripcion: '' })
-  const nuevaSalida = reactive<PartidaArqueoDTO>({ tipo: 1, monto: 0, descripcion: '' })
-
-  const METODOS_CONCEPTO = [
-    { id: 1, label: 'Efectivo' },
-    { id: 2, label: 'QR' },
-    { id: 3, label: 'Tarjeta' },
-    { id: 4, label: 'Mixto' },
-    { id: 5, label: 'Otro' },
-  ]
-
-  async function cargarResumenTurno() {
-    cargandoArqueo.value = true
-    errorArqueo.value = null
-    sinTurnoActivo.value = false
-
-    try {
-      const data = await cajaService.obtenerResumenTurno()
-      resumenTurno.value = data
-
-      // Filas fijas del sistema
-      entradasDeclaradas.value = [
-        {
-          tipo: 1,
-          monto: Number(data.totalVentasEfectivo) || 0,
-          descripcion: 'Ventas en Efectivo (Sistema)',
-          esSistema: true,
-          montoSistema: Number(data.totalVentasEfectivo) || 0,
-        },
-        {
-          tipo: 2,
-          monto: Number(data.totalVentasQr) || 0,
-          descripcion: 'Ventas por QR (Digital)',
-          esSistema: true,
-          montoSistema: Number(data.totalVentasQr) || 0,
-        },
-        {
-          tipo: 3,
-          monto: Number(data.totalVentasTarjeta) || 0,
-          descripcion: 'Ventas con Tarjeta (POS)',
-          esSistema: true,
-          montoSistema: Number(data.totalVentasTarjeta) || 0,
-        },
-      ]
-      salidasDeclaradas.value = []
-    } catch (err: any) {
-      if (err.response?.status === 404 || err.message?.includes('No hay turno activo')) {
-        sinTurnoActivo.value = true
-        resumenTurno.value = null
-      } else {
-        errorArqueo.value = err.userMessage || 'No se pudo cargar el resumen del turno activo.'
-      }
-    } finally {
-      cargandoArqueo.value = false
-    }
-  }
-
-  // Movimientos extra-venta del turno
-  const movimientosEntradaList = computed(() =>
-    (resumenTurno.value?.movimientosDetalle || []).filter((m) => m.tipo_movimiento === 1)
-  )
-  const movimientosSalidaList = computed(() =>
-    (resumenTurno.value?.movimientosDetalle || []).filter((m) => m.tipo_movimiento === 2)
-  )
-
-  // Cálculos de Entradas
-  const sumaEntradasDeclaradas = computed(() =>
-    entradasDeclaradas.value.reduce((acc, p) => acc + (Number(p.monto) || 0), 0)
-  )
-  const movEntradasTurno = computed(() => Number(resumenTurno.value?.totalMovimientosEntrada) || 0)
-  const totalEntradasFinal = computed(() => sumaEntradasDeclaradas.value + movEntradasTurno.value)
-
-  // Cálculos de Salidas
-  const sumaSalidasDeclaradas = computed(() =>
-    salidasDeclaradas.value.reduce((acc, p) => acc + (Number(p.monto) || 0), 0)
-  )
-  const movSalidasTurno = computed(() => Number(resumenTurno.value?.totalMovimientosSalida) || 0)
-  const totalSalidasFinal = computed(() => sumaSalidasDeclaradas.value + movSalidasTurno.value)
-
-  // Balance y diferencias
-  const utilidadArqueo = computed(() => totalEntradasFinal.value - totalSalidasFinal.value)
-  const totalVentasEsperadas = computed(() => Number(resumenTurno.value?.totalVentasGeneral) || 0)
-  const diferenciaVentas = computed(() => totalEntradasFinal.value - totalVentasEsperadas.value)
-
-  function agregarEntrada() {
-    if (!nuevaEntrada.monto || Number(nuevaEntrada.monto) <= 0) return
-    entradasDeclaradas.value.push({
-      tipo: nuevaEntrada.tipo,
-      monto: Number(nuevaEntrada.monto),
-      descripcion: (nuevaEntrada.descripcion || '').trim().slice(0, 40) || 'Ingreso adicional declarado',
-      esSistema: false,
-    })
-    nuevaEntrada.monto = 0
-    nuevaEntrada.descripcion = ''
-  }
-
-  function eliminarEntrada(index: number) {
-    if (entradasDeclaradas.value[index]?.esSistema) return
-    entradasDeclaradas.value.splice(index, 1)
-  }
-
-  function agregarSalida() {
-    if (!nuevaSalida.monto || Number(nuevaSalida.monto) <= 0) return
-    salidasDeclaradas.value.push({
-      tipo: nuevaSalida.tipo,
-      monto: Number(nuevaSalida.monto),
-      descripcion: (nuevaSalida.descripcion || '').trim().slice(0, 40) || 'Egreso / Retiro declarado',
-      esSistema: false,
-    })
-    nuevaSalida.monto = 0
-    nuevaSalida.descripcion = ''
-  }
-
-  function eliminarSalida(index: number) {
-    salidasDeclaradas.value.splice(index, 1)
-  }
-
-  function abrirConfirmacionArqueo() {
-    permanecerEnSistema.value = !esCajero.value
-    modalConfirmarVisible.value = true
-  }
-
-  async function ejecutarRegistroArqueo() {
-    if (!resumenTurno.value) return
-    guardandoArqueo.value = true
-    errorArqueo.value = null
-
-    try {
-      const snapshot = {
-        resumenVentas: {
-          conteo: resumenTurno.value.conteoVentas,
-          efectivo: resumenTurno.value.totalVentasEfectivo,
-          qr: resumenTurno.value.totalVentasQr,
-          tarjeta: resumenTurno.value.totalVentasTarjeta,
-          total: resumenTurno.value.totalVentasGeneral,
-        },
-        resumenMovimientos: {
-          entradas: resumenTurno.value.totalMovimientosEntrada,
-          salidas: resumenTurno.value.totalMovimientosSalida,
-          cantidad: resumenTurno.value.cantidadMovimientos,
-        },
-        totalesArqueo: {
-          entradasDeclaradas: sumaEntradasDeclaradas.value,
-          salidasDeclaradas: sumaSalidasDeclaradas.value,
-          totalEntradasFinal: totalEntradasFinal.value,
-          totalSalidasFinal: totalSalidasFinal.value,
-          utilidad: utilidadArqueo.value,
-          diferencia: diferenciaVentas.value,
-        },
-        topProductos: resumenTurno.value.topProductos || [],
-      }
-
-      const res = await cajaService.registrarArqueo({
-        sesionId: resumenTurno.value.sesionId,
-        montoBase: null,
-        datosSnapshot: snapshot,
-        entradas: entradasDeclaradas.value
-          .filter((e) => (Number(e.monto) || 0) > 0 || e.esSistema)
-          .map((e) => ({ tipo: e.tipo, monto: Number(e.monto) || 0, descripcion: e.descripcion })),
-        salidas: salidasDeclaradas.value
-          .filter((s) => (Number(s.monto) || 0) > 0)
-          .map((s) => ({ tipo: s.tipo, monto: Number(s.monto) || 0, descripcion: s.descripcion })),
-        periodo: 'Turno',
-      })
-
-      modalConfirmarVisible.value = false
-
-      if (permanecerEnSistema.value) {
-        mensajeExito.value = `Arqueo registrado con éxito (Reporte #REP-${res.reporteId}). Su sesión laboral ha sido sellada.`
-        resumenTurno.value = null
-        sinTurnoActivo.value = true
-        // Cambiar a la pestaña de reportes y recargar
-        pestanaActiva.value = 'reportes'
-        await cargarReportes()
-      } else {
-        authStore.logout()
-        router.push('/')
-      }
-    } catch (err: any) {
-      errorArqueo.value = err.userMessage || 'Ocurrió un error al registrar el arqueo de caja.'
-    } finally {
-      guardandoArqueo.value = false
-    }
-  }
-
-  async function ejecutarOmitirArqueo() {
-    omitiendoArqueo.value = true
-    try {
-      await cajaService.cerrarSesionDirecta()
-      modalOmitirVisible.value = false
-      authStore.logout()
-      router.push('/')
-    } catch (err: any) {
-      errorArqueo.value = err.userMessage || 'No se pudo cerrar la sesión directa.'
-    } finally {
-      omitiendoArqueo.value = false
-    }
-  }
-
-  // ====================================================================
-  // PESTAÑA 2: REPORTES HISTÓRICOS Y AUDITORÍA
+  // REPORTES HISTÓRICOS Y AUDITORÍA
   // ====================================================================
   const cargandoReportes = ref(false)
   const listaReportes = ref<ReporteListadoDTO[]>([])
@@ -306,7 +59,7 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       filtrosReportes.fechaHasta = ayerStr
     } else if (tipo === 'semana') {
       const d = new Date(hoy)
-      const diaSemana = d.getDay() === 0 ? 6 : d.getDay() - 1 // lunes=0
+      const diaSemana = d.getDay() === 0 ? 6 : d.getDay() - 1
       d.setDate(d.getDate() - diaSemana)
       filtrosReportes.fechaDesde = formato(d)
       filtrosReportes.fechaHasta = formato(hoy)
@@ -552,8 +305,7 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
     try {
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' })
 
-      // Membrete
-      doc.setFillColor(15, 23, 42) // Slate 900
+      doc.setFillColor(15, 23, 42)
       doc.rect(14, 12, 6, 16, 'F')
 
       doc.setFontSize(16)
@@ -566,7 +318,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       doc.setTextColor(100, 116, 139)
       doc.text(`Historial Consolidado de Reportes y Cierres de Turno | Generado: ${new Date().toLocaleString('es-BO')}`, 24, 25)
 
-      // Caja de resumen superior
       let sumEntradas = 0
       let sumSalidas = 0
       let sumUtilidad = 0
@@ -589,7 +340,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       doc.setTextColor(15, 23, 42)
       doc.text(`Balance Neto: Bs. ${sumUtilidad.toFixed(2)}`, 205, 39)
 
-      // Tabla de datos
       const head = [
         ['Reporte', 'Fecha', 'Hora', 'Sucursal', 'Responsable / Cajero', 'Período', 'Entradas (Bs.)', 'Salidas (Bs.)', 'Utilidad (Bs.)'],
       ]
@@ -639,7 +389,7 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
 
       doc.save(`Reportes_Caja_Warnes_${fechaParaArchivo()}.pdf`)
       mensajeExito.value = `Reporte PDF generado exitosamente (${filasAExportar.length} registros).`
-    } catch (err: any) {
+    } catch {
       errorGeneral.value = 'Ocurrió un error al generar el archivo PDF.'
     }
   }
@@ -657,7 +407,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' })
 
-      // Cabecera institucional
       doc.setFillColor(15, 23, 42)
       doc.rect(14, 12, 4, 18, 'F')
 
@@ -676,7 +425,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       doc.setTextColor(100, 116, 139)
       doc.text(`Documento de Control y Auditoría Interna | Emisión: ${new Date().toLocaleString('es-BO')}`, 22, 29)
 
-      // Cuadro de metadata
       doc.setFillColor(248, 250, 252)
       doc.setDrawColor(226, 232, 240)
       doc.roundedRect(14, 34, 188, 24, 2, 2, 'FD')
@@ -692,7 +440,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       doc.text(`Inicio de Turno: ${formatearFechaHora(r.fechaInicio)}`, 110, 48)
       doc.text(`Cierre de Turno: ${formatearFechaHora(r.fechaFin || r.fechaCreacion)}`, 110, 54)
 
-      // Resumen Financiero
       autoTable(doc, {
         head: [['Concepto Financiero', 'Monto Registrado (Bs.)']],
         body: [
@@ -712,7 +459,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
         margin: { left: 14, right: 14 },
       })
 
-      // Detalle de Entradas Declaradas
       const ultY = (doc as any).lastAutoTable.finalY + 6
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
@@ -740,7 +486,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
         margin: { left: 14, right: 14 },
       })
 
-      // Detalle de Salidas Declaradas
       const ultY2 = (doc as any).lastAutoTable.finalY + 6
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
@@ -768,7 +513,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
         margin: { left: 14, right: 14 },
       })
 
-      // Firmas
       const ultY3 = Math.max((doc as any).lastAutoTable.finalY + 25, 230)
       doc.setDrawColor(148, 163, 184)
       doc.line(24, ultY3, 85, ultY3)
@@ -785,7 +529,7 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
 
       doc.save(`Acta_Arqueo_REP-${r.reporteId}.pdf`)
       mensajeExito.value = `Acta de arqueo descargada en PDF (Reporte #REP-${r.reporteId}).`
-    } catch (err: any) {
+    } catch {
       errorGeneral.value = 'No se pudo generar el comprobante PDF del arqueo.'
     }
   }
@@ -866,7 +610,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
   // INICIALIZACIÓN
   // ====================================================================
   onMounted(async () => {
-    // 1. Cargar sucursales
     try {
       const sucs = await sucursalService.listar(false)
       listaSucursales.value = sucs || []
@@ -874,7 +617,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       console.warn('No se pudieron cargar sucursales:', e)
     }
 
-    // 2. Cargar usuarios
     try {
       const usrs = await usuarioService.listarUsuarios()
       listaUsuarios.value = usrs || []
@@ -882,7 +624,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       console.warn('No se pudieron cargar usuarios:', e)
     }
 
-    // 3. Configurar sucursal por defecto según rol
     if (!esPropietario.value) {
       filtrosReportes.sucursalId = authStore.sucursalId || undefined
     }
@@ -890,32 +631,11 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
       filtrosReportes.usuarioId = authStore.usuarioId || undefined
     }
 
-    // 4. Cargar datos de la pestaña inicial
-    if (pestanaActiva.value === 'arqueo') {
-      await cargarResumenTurno()
-    } else {
-      await cargarReportes()
-    }
+    await cargarReportes()
   })
-
-  // Sincronizar si cambia query de ruta
-  watch(
-    () => route.query.tab,
-    (newTab) => {
-      if (newTab === 'reportes' && pestanaActiva.value !== 'reportes') {
-        pestanaActiva.value = 'reportes'
-        if (listaReportes.value.length === 0) cargarReportes()
-      } else if (newTab === 'arqueo' && pestanaActiva.value !== 'arqueo') {
-        pestanaActiva.value = 'arqueo'
-        if (!resumenTurno.value) cargarResumenTurno()
-      }
-    }
-  )
 
   return {
     authStore,
-    pestanaActiva,
-    cambiarPestana,
     listaSucursales,
     listaUsuarios,
     mensajeExito,
@@ -924,42 +644,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
     esSupervisor,
     esPropietario,
 
-    // Pestaña 1: Arqueo
-    cargandoArqueo,
-    guardandoArqueo,
-    omitiendoArqueo,
-    errorArqueo,
-    resumenTurno,
-    sinTurnoActivo,
-    modalOmitirVisible,
-    modalConfirmarVisible,
-    permanecerEnSistema,
-    entradasDeclaradas,
-    salidasDeclaradas,
-    nuevaEntrada,
-    nuevaSalida,
-    METODOS_CONCEPTO,
-    movimientosEntradaList,
-    movimientosSalidaList,
-    sumaEntradasDeclaradas,
-    movEntradasTurno,
-    totalEntradasFinal,
-    sumaSalidasDeclaradas,
-    movSalidasTurno,
-    totalSalidasFinal,
-    utilidadArqueo,
-    totalVentasEsperadas,
-    diferenciaVentas,
-    cargarResumenTurno,
-    agregarEntrada,
-    eliminarEntrada,
-    agregarSalida,
-    eliminarSalida,
-    abrirConfirmacionArqueo,
-    ejecutarRegistroArqueo,
-    ejecutarOmitirArqueo,
-
-    // Pestaña 2: Reportes
     cargandoReportes,
     listaReportes,
     selectedReporteIds,
@@ -974,7 +658,6 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
     toggleSeleccionarTodos,
     toggleSeleccionarFila,
 
-    // Modal Detalle
     modalDetalleVisible,
     cargandoDetalle,
     reporteDetalle,
@@ -982,12 +665,10 @@ export function useLibroMayor(tabInicialParam?: 'arqueo' | 'reportes') {
     abrirModalDetalle,
     cerrarModalDetalle,
 
-    // Exportadores
     exportarExcelReportes,
     exportarPdfReportes,
     descargarComprobantePdf,
 
-    // Utilidades
     formatearMonto,
     formatearFecha,
     formatearHora,

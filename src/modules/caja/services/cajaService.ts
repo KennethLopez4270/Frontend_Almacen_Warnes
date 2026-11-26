@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL } from '@/config/api'
+import { API_URL, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A CAJA, SESIONES Y REPORTES
@@ -13,6 +13,8 @@ const apiCaja = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiCaja)
 
 apiCaja.interceptors.request.use((config) => {
   const token = localStorage.getItem('tw_jwt_token')
@@ -94,6 +96,8 @@ export interface MovimientoDTO {
   sucursalId: number
   fechaCreacion: string
   sellado: boolean
+  rolUsuario?: number | null
+  requiereConsolidacion?: boolean
 }
 
 export interface CrearMovimientoDTO {
@@ -102,6 +106,7 @@ export interface CrearMovimientoDTO {
   tipoMovimiento: number
   metodoMovimiento: number
   detalle: string
+  consolidarDirecto?: boolean
 }
 
 export interface ModificarMovimientoDTO {
@@ -119,6 +124,7 @@ export interface FiltrosMovimientos {
   usuarioId?: number
   fechaDesde?: string
   fechaHasta?: string
+  estado?: '' | 'PENDIENTES' | 'CONSOLIDADOS' | 'TODOS'
 }
 
 export interface ItemMovimientoTurno {
@@ -264,8 +270,13 @@ export const cajaService = {
     return res.data
   },
 
-  async crearMovimiento(dto: CrearMovimientoDTO): Promise<{ mensaje: string; movimientoId: number }> {
+  async crearMovimiento(dto: CrearMovimientoDTO): Promise<{ mensaje: string; movimientoId: number; reporteId?: number }> {
     const res = await apiCaja.post('/movimientos', dto)
+    return res.data
+  },
+
+  async consolidarMovimientos(movimientoIds: number[]): Promise<{ mensaje: string; reporteIds: number[] }> {
+    const res = await apiCaja.post('/movimientos/consolidar', { movimientoIds })
     return res.data
   },
 

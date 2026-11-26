@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL } from '@/config/api'
+import { API_URL, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO AL LIBRO MAYOR
@@ -13,6 +13,8 @@ const apiLibroMayor = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiLibroMayor)
 
 // Inyectar token JWT automáticamente
 apiLibroMayor.interceptors.request.use((config) => {

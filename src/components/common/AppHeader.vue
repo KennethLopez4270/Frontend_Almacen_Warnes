@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { cajaService } from '@/modules/caja/services/cajaService'
 import NotificacionesBell from '@/components/common/NotificacionesBell.vue'
 
 const route = useRoute()
@@ -11,14 +12,17 @@ const authStore = useAuthStore()
 // Mapa de títulos limpios para la barra superior
 const titulosRutas: Record<string, { modulo: string; titulo: string }> = {
   '/pos': { modulo: 'Ventas', titulo: 'Terminal Punto de Venta (POS)' },
-  '/inventario': { modulo: 'Inventario', titulo: 'Gestión de Inventario' },
+  '/caja/historial-ventas': { modulo: 'Ventas', titulo: 'Historial de Transacciones' },
+  '/ventas/clientes': { modulo: 'Ventas', titulo: 'Gestión de Clientes' },
+  '/inventario': { modulo: 'Inventario', titulo: 'Lotes y Stock Físico' },
   '/inventario/proveedores': { modulo: 'Inventario', titulo: 'Distribuidores y Acuerdos' },
   '/inventario/kardex': { modulo: 'Inventario', titulo: 'Historial de Movimientos' },
-  '/auditoria/sala-espera': { modulo: 'Inventario', titulo: 'Sala de Espera y Auditoría' },
-  '/caja/arqueo': { modulo: 'Caja', titulo: 'Arqueo y Cierre de Caja' },
-  '/caja/historial-ventas': { modulo: 'Caja', titulo: 'Historial de Transacciones' },
+  '/caja/arqueo': { modulo: 'Control de Caja', titulo: 'Arqueo y Cierre de Turno' },
+  '/caja/movimientos': { modulo: 'Control de Caja', titulo: 'Movimientos de Caja' },
+  '/caja/libro-mayor': { modulo: 'Control de Caja', titulo: 'Libro Mayor y Reportes' },
   '/dashboard': { modulo: 'Administración', titulo: 'Dashboard Ejecutivo y Métricas' },
   '/admin/usuarios': { modulo: 'Administración', titulo: 'Gestión Integral de Usuarios' },
+  '/admin/sesiones': { modulo: 'Administración', titulo: 'Auditoría de Sesiones' },
   '/admin/configuracion': { modulo: 'Administración', titulo: 'Configuración Paramétrica del ERP' },
   '/notificaciones': { modulo: 'Notificaciones', titulo: 'Centro de Alertas y Notificaciones' },
 }
@@ -29,6 +33,39 @@ const infoRutaActual = computed(() => {
 
 function irASeleccionarSucursal() {
   router.push('/seleccionar-sucursal')
+}
+
+const procesandoLogout = ref(false)
+
+async function handleLogout() {
+  if (procesandoLogout.value) return
+  procesandoLogout.value = true
+
+  try {
+    if (authStore.isCajero) {
+      try {
+        const resumen = await cajaService.obtenerResumenTurno()
+        if (resumen && resumen.requiereArqueo) {
+          procesandoLogout.value = false
+          router.push('/caja/arqueo')
+          return
+        }
+      } catch (err) {
+        console.warn('No se pudo consultar resumen de turno:', err)
+      }
+    }
+
+    try {
+      await cajaService.cerrarSesionDirecta()
+    } catch (err) {
+      console.warn('Aviso al cerrar sesión directa:', err)
+    }
+
+    authStore.logout()
+    router.push('/')
+  } finally {
+    procesandoLogout.value = false
+  }
 }
 </script>
 
@@ -70,15 +107,34 @@ function irASeleccionarSucursal() {
       <!-- CAMPANA DE NOTIFICACIONES EN TIEMPO REAL -->
       <NotificacionesBell />
 
-      <!-- PERFIL RESUMIDO DEL OPERADOR -->
+      <!-- PERFIL UNIFICADO DEL OPERADOR + CERRAR SESIÓN -->
       <div class="user-pill">
-        <div class="user-avatar-sm">
+        <div class="user-avatar-sm" :title="`${authStore.nombreCompleto} (@${authStore.usuario})`">
           {{ (authStore.usuario || 'U').charAt(0).toUpperCase() }}
         </div>
         <div class="user-meta">
-          <span class="user-name">{{ authStore.nombreCompleto }}</span>
-          <span class="user-role">{{ authStore.rolNombre }}</span>
+          <span class="user-name" :title="authStore.nombreCompleto">{{ authStore.nombreCompleto }}</span>
+          <span class="user-subline" :title="`@${authStore.usuario} • ${authStore.rolNombre}`">
+            <span class="user-handle">@{{ authStore.usuario }}</span>
+            <span class="user-dot">&bull;</span>
+            <span class="user-role">{{ authStore.rolNombre }}</span>
+          </span>
         </div>
+
+        <button
+          type="button"
+          class="btn-header-logout"
+          :disabled="procesandoLogout"
+          title="Cerrar Sesión"
+          @click="handleLogout"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span class="logout-label">{{ procesandoLogout ? 'Saliendo...' : 'Salir' }}</span>
+        </button>
       </div>
     </div>
   </header>
@@ -130,7 +186,7 @@ function irASeleccionarSucursal() {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* SUCURSAL PILL */
@@ -182,45 +238,116 @@ function irASeleccionarSucursal() {
   color: #38bdf8;
 }
 
-/* USER PILL */
+/* USER PILL + LOGOUT */
 .user-pill {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-left: 8px;
+  padding-left: 12px;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar-sm {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: #ffffff;
+  flex-shrink: 0;
 }
 
 .user-meta {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
 }
 
 .user-name {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #f1f5f9;
-  max-width: 150px;
+  line-height: 1.2;
+  max-width: 190px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.user-role {
-  font-size: 0.68rem;
+.user-subline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  line-height: 1.2;
   color: #94a3b8;
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-handle {
+  font-family: var(--erp-font-mono, monospace);
+  color: #cbd5e1;
+}
+
+.user-dot {
+  color: #475569;
+}
+
+.user-role {
+  color: #94a3b8;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-header-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+  padding: 6px 11px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-header-logout:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.btn-header-logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.logout-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .user-meta {
+    display: none;
+  }
+  .logout-label {
+    display: none;
+  }
 }
 </style>

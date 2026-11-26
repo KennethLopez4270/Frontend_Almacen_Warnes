@@ -33,6 +33,7 @@ export const listaSucursales = ref<SucursalDTO[]>([])
 export const searchQuery = ref('')
 export const selectedRol = ref<number | ''>('')
 export const selectedSucursal = ref<number | ''>('')
+export const selectedEstado = ref<number | ''>('')
 export const mostrarBajas = ref(false)
 
 // ====================================================================
@@ -123,7 +124,23 @@ export const mapaEstadosPorId = computed(() => {
 })
 
 export function obtenerEstadoUsuario(usuarioId: number): number {
+  const row = usuarios.value.find((u) => u.usuarioId === usuarioId)
+  if (row && row.estado !== undefined && row.estado !== null) {
+    return row.estado
+  }
   return mapaEstadosPorId.value[usuarioId] ?? 1
+}
+
+export const usuariosFiltrados = computed(() => {
+  if (selectedEstado.value === '') {
+    return usuarios.value
+  }
+  const estadoTarget = Number(selectedEstado.value)
+  return usuarios.value.filter((u) => obtenerEstadoUsuario(u.usuarioId) === estadoTarget)
+})
+
+export function esUsuarioActual(usuarioId: number): boolean {
+  return authStore.usuarioId !== null && authStore.usuarioId === usuarioId
 }
 
 // ====================================================================
@@ -352,8 +369,83 @@ export function abrirModalBaja(u: UsuarioListadoDTO) {
     agregarToast('Permiso Denegado', 'Solo el Propietario tiene privilegios para dar de baja cuentas.', 'warning')
     return
   }
+  if (esUsuarioActual(u.usuarioId)) {
+    agregarToast('Acción Restringida', 'No puedes dar de baja tu propia cuenta en sesión.', 'warning')
+    return
+  }
   usuarioABaja.value = u
   modalBajaVisible.value = true
+}
+
+// ====================================================================
+// 8B. MODAL: BLOQUEAR / DESBLOQUEAR CUENTA
+// ====================================================================
+
+export const modalEstadoVisible = ref(false)
+export const usuarioAEstado = ref<UsuarioListadoDTO | null>(null)
+export const nuevoEstadoObjetivo = ref<1 | 3>(3)
+export const cargandoEstado = ref(false)
+
+export function abrirModalEstado(u: UsuarioListadoDTO, estadoObjetivo: 1 | 3) {
+  if (!authStore.isPropietario && authStore.rolId !== null) {
+    agregarToast('Permiso Denegado', 'Solo el Propietario puede bloquear o desbloquear usuarios.', 'warning')
+    return
+  }
+  if (esUsuarioActual(u.usuarioId)) {
+    agregarToast('Acción Restringida', 'No puedes bloquear ni cambiar el estado de tu propia cuenta en sesión.', 'warning')
+    return
+  }
+  usuarioAEstado.value = u
+  nuevoEstadoObjetivo.value = estadoObjetivo
+  modalEstadoVisible.value = true
+}
+
+export async function confirmarCambioEstado() {
+  if (!usuarioAEstado.value) return
+  if (esUsuarioActual(usuarioAEstado.value.usuarioId)) {
+    agregarToast('Acción Restringida', 'No puedes bloquear tu propia cuenta en sesión.', 'warning')
+    modalEstadoVisible.value = false
+    return
+  }
+
+  cargandoEstado.value = true
+  try {
+    const res = await seguridadService.cambiarEstadoUsuario(
+      usuarioAEstado.value.usuarioId,
+      nuevoEstadoObjetivo.value,
+      authStore.usuarioId || 1
+    )
+
+    const esBloqueo = nuevoEstadoObjetivo.value === ESTADOS_USUARIO.BLOQUEADO
+    agregarToast(
+      esBloqueo ? 'Usuario Bloqueado' : 'Usuario Desbloqueado',
+      res.mensaje ||
+        (esBloqueo
+          ? `La cuenta @${usuarioAEstado.value.usuario} ha sido bloqueada.`
+          : `La cuenta @${usuarioAEstado.value.usuario} ha sido activada nuevamente.`),
+      esBloqueo ? 'warning' : 'success'
+    )
+    modalEstadoVisible.value = false
+    await cargarUsuarios()
+
+    if (esBloqueo) {
+      try {
+        const notifStore = useNotificacionesStore()
+        await notifStore.crearNotificacion({
+          rolDestino: 3,
+          tipoNotificacion: 8,
+          tituloAlerta: 'Cuenta de Usuario Bloqueada',
+          mensajeAlerta: `La cuenta @${usuarioAEstado.value.usuario} fue bloqueada y no podrá iniciar sesión.`,
+          direccion: '/admin/usuarios',
+        })
+        await notifStore.cargarNotificaciones(true)
+      } catch (_) {}
+    }
+  } catch (err: any) {
+    agregarToast('Error al Cambiar Estado', extraerError(err), 'danger')
+  } finally {
+    cargandoEstado.value = false
+  }
 }
 
 export async function confirmarBaja() {

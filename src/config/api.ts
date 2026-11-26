@@ -1,3 +1,5 @@
+import type { AxiosInstance } from 'axios'
+
 /**
  * ====================================================================
  * CONFIGURACIÓN CENTRALIZADA DE API Y URLS DEL ERP WARNES
@@ -8,6 +10,75 @@
 
 export const URL_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 export const API_URL = `${URL_BASE}/api`
+
+const AUTH_STORAGE_KEYS = [
+  'tw_jwt_token',
+  'tw_user_id',
+  'tw_sucursal_id',
+  'tw_sucursal_original',
+  'tw_sucursal_nombre',
+  'tw_username',
+  'tw_nombres',
+  'tw_apellidos',
+  'tw_rol_id',
+  'tw_estado',
+  'tw_sesion_id',
+  'tw_hora_sesion_abierta',
+]
+
+let expulsionEnCurso = false
+
+/**
+ * Instala en cualquier instancia Axios:
+ * 1) Inyección opcional de token JWT (para servicios que no lo tenían)
+ * 2) Expulsión automática e inmediata a Login cuando el servidor devuelve 423 (CUENTA_BLOQUEADA)
+ */
+export function instalarInterceptorSesion(client: AxiosInstance, injectJwt = false): void {
+  if (injectJwt) {
+    client.interceptors.request.use((config) => {
+      const token = localStorage.getItem('tw_jwt_token')
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+      return config
+    })
+  }
+
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error?.response?.status
+      const codigo = error?.response?.data?.codigo
+      const url: string = error?.config?.url || ''
+
+      const esEndpointPublicoAuth =
+        url.includes('/auth/login') || url.includes('/auth/solicitar-recuperacion')
+
+      if (!esEndpointPublicoAuth && (status === 423 || codigo === 'CUENTA_BLOQUEADA')) {
+        if (!expulsionEnCurso) {
+          expulsionEnCurso = true
+          const msg =
+            error?.response?.data?.error ||
+            'Tu cuenta ha sido bloqueada o deshabilitada. Contacta con un propietario o administrador.'
+
+          try {
+            sessionStorage.setItem('tw_bloqueo_msg', msg)
+          } catch {}
+
+          AUTH_STORAGE_KEYS.forEach((k) => localStorage.removeItem(k))
+
+          if (window.location.pathname !== '/') {
+            window.location.replace('/?bloqueado=1')
+          } else {
+            expulsionEnCurso = false
+          }
+        }
+      }
+
+      return Promise.reject(error)
+    }
+  )
+}
 
 /**
  * Normaliza cualquier ruta de redirección para que sea relativa a Vue Router,

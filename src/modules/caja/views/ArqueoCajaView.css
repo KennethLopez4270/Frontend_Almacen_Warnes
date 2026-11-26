@@ -1,30 +1,170 @@
-.view-container {
-  padding: 1.5rem;
-}
-.view-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
+/* ====================================================================
+   MODULO CAJA - ARQUEO Y CIERRE DE TURNO (ESTILOS ESPECIFICOS)
+   Hereda layout, topbar, botones, KPIs, tablas, badges y modales de:
+   src/assets/styles/ (index.css)
+   ==================================================================== */
+
+.arq-branch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-secondary);
   font-weight: 600;
-  color: #14b8a6;
-  background-color: #f0fdfa;
-  border-radius: 9999px;
-  margin-bottom: 0.75rem;
+  box-shadow: var(--erp-shadow-sm);
 }
-h1 {
-  font-size: 1.75rem;
+
+.arq-shift-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.35rem;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  box-shadow: var(--erp-shadow-sm);
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.arq-shift-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.arq-shift-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--erp-radius-lg);
+  background-color: var(--erp-bg-muted);
+  border: 1px solid var(--erp-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--erp-primary);
+  flex-shrink: 0;
+}
+
+/* FRENTE A FRENTE: INGRESOS (IZQUIERDA) Y EGRESOS (DERECHA) */
+.arq-frente-a-frente {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 960px) {
+  .arq-frente-a-frente {
+    grid-template-columns: 1fr;
+  }
+}
+
+.arq-col-panel {
+  background: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  box-shadow: var(--erp-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.arq-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.15rem;
+  border-bottom: 1px solid var(--erp-border-light);
+  background-color: var(--erp-bg-muted);
+  gap: 0.75rem;
+}
+
+.arq-panel-title {
+  font-size: var(--erp-font-base);
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
+  color: var(--erp-text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
 }
-p {
-  color: #64748b;
-  font-size: 0.95rem;
+
+.arq-panel-body {
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.arq-add-row-form {
+  display: grid;
+  grid-template-columns: 115px 1fr 110px 36px;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.85rem;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .arq-add-row-form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.arq-input-compact {
+  padding: 0.45rem 0.65rem;
+  font-size: var(--erp-font-sm);
+  border-radius: var(--erp-radius-md);
+}
+
+.arq-balance-summary-card {
+  background: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--erp-shadow-sm);
+}
+
+.arq-balance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.arq-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--erp-border-light);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.arq-table-title {
+  font-size: var(--erp-font-md);
+  font-weight: 700;
+  color: var(--erp-text-main);
+  margin: 0;
+}
+
+.arq-table-subtitle {
+  font-size: var(--erp-font-xs);
+  color: var(--erp-text-muted);
+  margin: 0.15rem 0 0 0;
+}
+
+.arq-callout-box {
+  background-color: var(--erp-bg-hover);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  padding: 0.85rem 1rem;
 }

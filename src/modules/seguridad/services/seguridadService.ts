@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO AL MODULO DE SEGURIDAD (SPRING BOOT)
@@ -13,6 +13,8 @@ const apiSeguridad = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiSeguridad)
 
 // Interceptor para inyectar token JWT si existe en localStorage
 apiSeguridad.interceptors.request.use((config) => {
@@ -43,6 +45,10 @@ apiSeguridad.interceptors.response.use(
     }
 
     ;(error as any).userMessage = cleanMessage
+    ;(error as any).httpStatus = error.response?.status
+    if (error.response?.data && typeof error.response.data === 'object' && error.response.data.codigo) {
+      ;(error as any).errorCode = error.response.data.codigo
+    }
     return Promise.reject(error)
   }
 )
@@ -131,6 +137,19 @@ export interface UsuarioModificarDTO {
   usuarioModificacion: number
 }
 
+export interface EstadoInicialDTO {
+  requiereConfiguracionInicial: boolean
+  requiereClaveInstalacion: boolean
+}
+
+export interface PrimerAdminRegistroDTO {
+  usuario: string
+  nombres: string
+  apellidos: string
+  password: string
+  claveSecreta: string
+}
+
 // ====================================================================
 // SERVICIO DE SEGURIDAD Y USUARIOS
 // ====================================================================
@@ -156,6 +175,21 @@ export const seguridadService = {
 
   async cambiarContrasena(datos: CambiarContrasenaDTO): Promise<{ mensaje: string }> {
     const response = await apiSeguridad.post<{ mensaje: string }>('/auth/cambiar-contrasena', datos)
+    return response.data
+  },
+
+  async obtenerEstadoInicial(): Promise<EstadoInicialDTO> {
+    const response = await apiSeguridad.get<EstadoInicialDTO>('/auth/estado-inicial')
+    return response.data
+  },
+
+  async registrarPrimerAdmin(
+    datos: PrimerAdminRegistroDTO
+  ): Promise<{ mensaje: string; usuarioId: number }> {
+    const response = await apiSeguridad.post<{ mensaje: string; usuarioId: number }>(
+      '/auth/registrar-primer-admin',
+      datos
+    )
     return response.data
   },
 
@@ -208,6 +242,18 @@ export const seguridadService = {
     datos: UsuarioModificarDTO
   ): Promise<{ mensaje: string }> {
     const response = await apiSeguridad.put<{ mensaje: string }>(`/usuarios/${id}`, datos)
+    return response.data
+  },
+
+  async cambiarEstadoUsuario(
+    id: number,
+    estado: 1 | 3,
+    usuarioModificacion: number
+  ): Promise<{ mensaje: string; estado: number }> {
+    const response = await apiSeguridad.patch<{ mensaje: string; estado: number }>(
+      `/usuarios/${id}/estado`,
+      { estado, usuarioModificacion }
+    )
     return response.data
   },
 

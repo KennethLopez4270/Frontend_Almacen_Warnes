@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A NOTIFICACIONES Y ALERTAS INTERNAS
@@ -13,6 +13,8 @@ const apiNotificaciones = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiNotificaciones)
 
 // Inyectar token JWT automáticamente
 apiNotificaciones.interceptors.request.use((config) => {

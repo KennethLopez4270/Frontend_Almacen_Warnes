@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A SUCURSALES FÍSICAS
@@ -13,6 +13,8 @@ const apiSucursales = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiSucursales)
 
 // Interceptor para inyectar token JWT
 apiSucursales.interceptors.request.use((config) => {

@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { cajaService } from '@/modules/caja/services/cajaService'
 import { useNotificacionesStore } from '@/stores/notificaciones'
-import ConceptoBadge from '@/components/common/ConceptoBadge.vue'
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
 const notificacionesStore = useNotificacionesStore()
 
@@ -65,12 +62,11 @@ const navModules: NavModule[] = [
       { name: 'Lotes y Stock Físico', to: '/inventario' },
       { name: 'Distribuidores y Acuerdos', to: '/inventario/proveedores' },
       { name: 'Historial de Movimientos', to: '/inventario/kardex' },
-      { name: 'Sala de Espera (Auditoría)', to: '/auditoria/sala-espera' },
     ],
   },
   {
     id: 'caja',
-    title: 'Caja',
+    title: 'Control de Caja',
     icon: 'caja',
     roles: [1, 2, 3], // Cajero, Supervisor, Propietario
     items: [
@@ -131,46 +127,6 @@ function toggleModule(moduleId: string) {
     return
   }
   openModules.value[moduleId] = !openModules.value[moduleId]
-}
-
-const procesandoLogout = ref(false)
-
-async function handleLogout() {
-  if (procesandoLogout.value) return
-  procesandoLogout.value = true
-
-  try {
-    if (authStore.isCajero) {
-      // Si es Cajero, verificar si tuvo actividad en su turno
-      try {
-        const resumen = await cajaService.obtenerResumenTurno()
-        if (resumen && resumen.requiereArqueo) {
-          // Si tuvo actividad, redirigir a Arqueo de Caja del Turno
-          procesandoLogout.value = false
-          router.push('/caja/arqueo')
-          return
-        }
-      } catch (err) {
-        console.warn('No se pudo consultar resumen de turno:', err)
-      }
-    }
-
-    // Propietario, Supervisor o Cajero sin actividad: cerrar sesión directa en backend
-    try {
-      await cajaService.cerrarSesionDirecta()
-    } catch (err) {
-      console.warn('Aviso al cerrar sesión directa:', err)
-    }
-
-    authStore.logout()
-    router.push('/')
-  } finally {
-    procesandoLogout.value = false
-  }
-}
-
-function irASeleccionarSucursal() {
-  router.push('/seleccionar-sucursal')
 }
 </script>
 
@@ -337,80 +293,6 @@ function irASeleccionarSucursal() {
         </transition>
       </div>
     </nav>
-
-    <!-- 3. FOOTER: PERFIL DEL USUARIO Y LOGOUT -->
-    <div class="sidebar-footer">
-      <!-- MODO COLAPSADO: AVATAR Y BOTÓN DE LOGOUT CENTRADOS -->
-      <div v-if="!isExpanded" class="user-collapsed-layout">
-        <div class="user-avatar" :title="authStore.nombreCompleto + ' (' + authStore.usuario + ')'">
-          {{ (authStore.usuario || 'U').charAt(0).toUpperCase() }}
-        </div>
-        <button
-          type="button"
-          class="btn-collapsed-logout"
-          :title="'Cerrar Sesión (' + authStore.usuario + ')'"
-          @click="handleLogout"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-svg">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-
-      <!-- MODO EXPANDIDO: TARJETA COMPLETA CON CABECERA Y BADGES MULTILÍNEA -->
-      <div v-else class="user-expanded-card">
-        <!-- Fila Superior: Avatar + Nombre/Usuario + Botón Logout -->
-        <div class="user-card-top">
-          <div class="user-avatar" :title="authStore.nombreCompleto">
-            {{ (authStore.usuario || 'U').charAt(0).toUpperCase() }}
-          </div>
-
-          <div class="user-identity">
-            <span class="user-fullname" :title="authStore.nombreCompleto">
-              {{ authStore.nombreCompleto }}
-            </span>
-            <span class="user-handle">@{{ authStore.usuario }}</span>
-          </div>
-
-          <button
-            type="button"
-            class="btn-sidebar-logout"
-            title="Cerrar Sesión"
-            @click="handleLogout"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-svg">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Fila Inferior: Badges (Rol + Sucursal) con envoltura flexible -->
-        <div class="user-card-badges">
-          <ConceptoBadge tipo="rol" :valor="authStore.rolId" size="sm" />
-          <span v-if="authStore.sucursalId" class="sucursal-pill">
-            Suc. #{{ authStore.sucursalId }}
-          </span>
-
-          <!-- BOTÓN CAMBIAR SUCURSAL PARA PROPIETARIO -->
-          <button
-            v-if="authStore.puedeCambiarSucursal"
-            type="button"
-            class="btn-cambiar-sucursal"
-            title="Cambiar de sucursal de trabajo"
-            @click="irASeleccionarSucursal"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="swap-icon">
-              <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"></path>
-            </svg>
-            <span>Cambiar</span>
-          </button>
-        </div>
-      </div>
-    </div>
   </aside>
 </template>
 

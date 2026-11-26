@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_URL, URL_BASE } from '@/config/api'
+import { API_URL, URL_BASE, instalarInterceptorSesion } from '@/config/api'
 
 // ====================================================================
 // CLIENTE AXIOS DEDICADO A CONCEPTOS PARAMÉTRICOS
@@ -13,6 +13,8 @@ const apiConceptos = axios.create({
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiConceptos)
 
 // Interceptor para inyectar token JWT si existe en localStorage
 apiConceptos.interceptors.request.use((config) => {

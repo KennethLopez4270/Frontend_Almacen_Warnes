@@ -14,3 +14,20 @@
 .italic {
   font-style: italic;
 }
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-btn:disabled:hover {
+  background-color: var(--erp-bg-card);
+  color: var(--erp-text-secondary);
+  border-color: var(--erp-border-light);
+}
+
+.action-btn-success:hover:not(:disabled) {
+  background-color: var(--erp-success-bg, #f0fdf4);
+  color: var(--erp-success, #16a34a);
+  border-color: var(--erp-success-border, #bbf7d0);
+}

@@ -40,8 +40,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/caja/arqueo',
     name: 'ArqueoCaja',
-    component: () => import('@/modules/caja/views/LibroMayorView.vue'),
-    props: { tabInicial: 'arqueo' },
+    component: () => import('@/modules/caja/views/ArqueoCajaView.vue'),
   },
   {
     path: '/caja/movimientos',
@@ -53,7 +52,6 @@ const routes: RouteRecordRaw[] = [
     alias: ['/libro-mayor', '/caja/reportes'],
     name: 'LibroMayor',
     component: () => import('@/modules/caja/views/LibroMayorView.vue'),
-    props: { tabInicial: 'reportes' },
   },
   {
     path: '/caja/historial-ventas',

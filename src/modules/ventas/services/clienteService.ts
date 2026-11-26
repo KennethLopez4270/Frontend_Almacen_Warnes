@@ -1,13 +1,16 @@
 import axios from 'axios'
+import { API_URL, instalarInterceptorSesion } from '@/config/api'
 
 const apiClientes = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || API_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
   timeout: 15000,
 })
+
+instalarInterceptorSesion(apiClientes)
 
 // Interceptor JWT
 apiClientes.interceptors.request.use((config) => {

@@ -1,4 +1,4 @@
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import {
   cajaService,
@@ -14,18 +14,33 @@ export function useMovimientosCaja() {
 
   const cargando = ref(false)
   const guardando = ref(false)
+  const consolidando = ref(false)
   const error = ref<string | null>(null)
   const mensajeExito = ref<string | null>(null)
 
   const movimientos = ref<MovimientoDTO[]>([])
   const sucursales = ref<SucursalDTO[]>([])
+  const selectedMovimientoIds = ref<number[]>([])
 
   // Filtros reactivos
   const filtroTipo = ref<number | ''>('')
-  const filtroSoloPendientes = ref<boolean>(false)
+  const filtroEstado = ref<'' | 'PENDIENTES' | 'CONSOLIDADOS'>('')
   const filtroSucursal = ref<number | ''>('')
   const filtroFechaDesde = ref<string>('')
   const filtroFechaHasta = ref<string>('')
+
+  const movimientosPendientes = computed(() =>
+    movimientos.value.filter(m => !m.sellado)
+  )
+
+  const movimientosPorConsolidar = computed(() =>
+    movimientos.value.filter(m => !m.sellado && Boolean(m.requiereConsolidacion))
+  )
+
+  const todosSeleccionados = computed(() =>
+    movimientosPendientes.value.length > 0 &&
+    movimientosPendientes.value.every(m => selectedMovimientoIds.value.includes(m.movimientoId))
+  )
 
   // Modales
   const modalCrearVisible = ref(false)
@@ -40,6 +55,7 @@ export function useMovimientosCaja() {
     tipoMovimiento: 1, // 1=Entrada, 2=Salida
     metodoMovimiento: 1, // 1=Efectivo, 2=QR, 3=Tarjeta, 4=Mixto, 5=Otro
     detalle: '',
+    consolidarDirecto: false,
   })
 
   const formEditar = reactive<ModificarMovimientoDTO>({
@@ -73,12 +89,13 @@ export function useMovimientosCaja() {
     try {
       const filtros: FiltrosMovimientos = {
         tipoMovimiento: filtroTipo.value !== '' ? Number(filtroTipo.value) : undefined,
-        soloPendientes: filtroSoloPendientes.value || undefined,
+        estado: filtroEstado.value || undefined,
         sucursalId: filtroSucursal.value !== '' ? Number(filtroSucursal.value) : undefined,
         fechaDesde: filtroFechaDesde.value || undefined,
         fechaHasta: filtroFechaHasta.value || undefined,
       }
       movimientos.value = await cajaService.listarMovimientos(filtros)
+      selectedMovimientoIds.value = []
     } catch (err: any) {
       error.value = err.userMessage || 'Error al cargar movimientos de caja.'
     } finally {
@@ -88,11 +105,29 @@ export function useMovimientosCaja() {
 
   function limpiarFiltros() {
     filtroTipo.value = ''
-    filtroSoloPendientes.value = false
+    filtroEstado.value = ''
     filtroSucursal.value = ''
     filtroFechaDesde.value = ''
     filtroFechaHasta.value = ''
+    selectedMovimientoIds.value = []
     cargarMovimientos()
+  }
+
+  function toggleSeleccionarTodos() {
+    if (todosSeleccionados.value) {
+      selectedMovimientoIds.value = []
+    } else {
+      selectedMovimientoIds.value = movimientosPendientes.value.map(m => m.movimientoId)
+    }
+  }
+
+  function toggleSeleccionarFila(movimientoId: number) {
+    const idx = selectedMovimientoIds.value.indexOf(movimientoId)
+    if (idx === -1) {
+      selectedMovimientoIds.value.push(movimientoId)
+    } else {
+      selectedMovimientoIds.value.splice(idx, 1)
+    }
   }
 
   function abrirModalCrear() {
@@ -101,6 +136,7 @@ export function useMovimientosCaja() {
     formCrear.tipoMovimiento = 1
     formCrear.metodoMovimiento = 1
     formCrear.detalle = ''
+    formCrear.consolidarDirecto = !authStore.isCajero
     error.value = null
     modalCrearVisible.value = true
   }
@@ -122,15 +158,16 @@ export function useMovimientosCaja() {
     guardando.value = true
     error.value = null
     try {
-      await cajaService.crearMovimiento({
+      const res = await cajaService.crearMovimiento({
         sucursalId: formCrear.sucursalId,
         monto: Number(formCrear.monto),
         tipoMovimiento: formCrear.tipoMovimiento,
         metodoMovimiento: formCrear.metodoMovimiento,
         detalle: formCrear.detalle.trim().slice(0, 40),
+        consolidarDirecto: !authStore.isCajero ? Boolean(formCrear.consolidarDirecto) : false,
       })
       modalCrearVisible.value = false
-      mensajeExito.value = 'Movimiento registrado con éxito.'
+      mensajeExito.value = res.mensaje || 'Movimiento registrado con éxito.'
       setTimeout(() => (mensajeExito.value = null), 4000)
       cargarMovimientos()
     } catch (err: any) {
@@ -138,6 +175,41 @@ export function useMovimientosCaja() {
     } finally {
       guardando.value = false
     }
+  }
+
+  async function ejecutarConsolidacion(ids: number[]) {
+    if (ids.length === 0) return
+    consolidando.value = true
+    error.value = null
+    try {
+      const res = await cajaService.consolidarMovimientos(ids)
+      const reportesTexto = (res.reporteIds || []).map(id => `R-${id}`).join(', ')
+      mensajeExito.value = reportesTexto
+        ? `Movimientos consolidados en Libro Mayor (${reportesTexto}).`
+        : (res.mensaje || 'Movimientos consolidados correctamente.')
+      setTimeout(() => (mensajeExito.value = null), 5000)
+      await cargarMovimientos()
+    } catch (err: any) {
+      error.value = err.userMessage || 'Error al consolidar los movimientos.'
+    } finally {
+      consolidando.value = false
+    }
+  }
+
+  function consolidarUno(m: MovimientoDTO) {
+    if (m.sellado || consolidando.value) return
+    ejecutarConsolidacion([m.movimientoId])
+  }
+
+  function consolidarSeleccionados() {
+    if (selectedMovimientoIds.value.length === 0 || consolidando.value) return
+    ejecutarConsolidacion([...selectedMovimientoIds.value])
+  }
+
+  function consolidarPendientesDirectos() {
+    const ids = movimientosPorConsolidar.value.map(m => m.movimientoId)
+    if (ids.length === 0 || consolidando.value) return
+    ejecutarConsolidacion(ids)
   }
 
   function abrirModalEditar(m: MovimientoDTO) {
@@ -232,12 +304,17 @@ export function useMovimientosCaja() {
     authStore,
     cargando,
     guardando,
+    consolidando,
     error,
     mensajeExito,
     movimientos,
+    movimientosPendientes,
+    movimientosPorConsolidar,
+    selectedMovimientoIds,
+    todosSeleccionados,
     sucursales,
     filtroTipo,
-    filtroSoloPendientes,
+    filtroEstado,
     filtroSucursal,
     filtroFechaDesde,
     filtroFechaHasta,
@@ -250,6 +327,11 @@ export function useMovimientosCaja() {
     METODOS_CONCEPTO,
     cargarMovimientos,
     limpiarFiltros,
+    toggleSeleccionarTodos,
+    toggleSeleccionarFila,
+    consolidarUno,
+    consolidarSeleccionados,
+    consolidarPendientesDirectos,
     abrirModalCrear,
     guardarNuevoMovimiento,
     abrirModalEditar,

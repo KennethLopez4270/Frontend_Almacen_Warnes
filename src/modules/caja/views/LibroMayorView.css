@@ -1,330 +1,102 @@
 /* ====================================================================
-   MODULO CAJA - LIBRO MAYOR Y REPORTES (ESTILOS VISUALES SOBRIOS)
-   Alineado al Design System corporativo de Tienda Warnes ERP
+   MODULO CAJA - LIBRO MAYOR Y REPORTES HISTORICOS (ESTILOS ESPECIFICOS)
+   Hereda layout, topbar, botones, KPIs, filtros, tablas, badges y modales de:
+   src/assets/styles/ (index.css)
    ==================================================================== */
-
-.lm-wrapper {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  color: var(--erp-text-main, #0f172a);
-  background-color: var(--erp-bg-page, #f8fafc);
-  min-height: calc(100vh - 80px);
-  font-family: inherit;
-}
-
-/* TOPBAR PRINCIPAL */
-.lm-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.lm-topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-.lm-page-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--erp-radius-lg, 8px);
-  background-color: var(--erp-bg-card, #ffffff);
-  border: 1px solid var(--erp-border-light, #e2e8f0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--erp-dark, #0f172a);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.lm-page-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.lm-page-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--erp-text-main, #0f172a);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.lm-page-subtitle {
-  font-size: 0.85rem;
-  color: var(--erp-text-muted, #64748b);
-  margin: 0.25rem 0 0 0;
-}
-
-.lm-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
 
 .lm-branch-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   padding: 0.45rem 0.85rem;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #334155;
-  font-weight: 500;
-}
-
-/* PESTAÑAS PRINCIPALES DEL MÓDULO */
-.lm-tabs-nav {
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-  margin-bottom: 1.5rem;
-}
-
-.lm-tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 0.875rem;
+  background-color: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  font-size: var(--erp-font-sm);
+  color: var(--erp-text-secondary);
   font-weight: 600;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s ease;
+  box-shadow: var(--erp-shadow-sm);
 }
 
-.lm-tab-btn:hover {
-  color: #0f172a;
-}
-
-.lm-tab-btn.active {
-  color: #0f172a;
-  border-bottom-color: #0f172a;
-}
-
-.lm-tab-pill {
-  font-size: 0.725rem;
-  background-color: #f1f5f9;
-  color: #475569;
-  padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-.lm-tab-btn.active .lm-tab-pill {
-  background-color: #0f172a;
-  color: #ffffff;
-}
-
-/* ALERTAS Y MENSAJES */
-.lm-alert-success {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 6px;
-  color: #166534;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.lm-alert-danger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #991b1b;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-/* KPIS CARDS */
-.lm-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.lm-kpi-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+/* FILTROS EN REPORTES */
+.lm-filter-box {
+  background: var(--erp-bg-card);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-xl);
   padding: 1.15rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.lm-kpi-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.lm-kpi-label {
-  font-size: 0.775rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.lm-kpi-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0.25rem 0 0.15rem 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.lm-kpi-sub {
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-.lm-kpi-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #475569;
-}
-
-/* TARJETA DE FILTROS */
-.lm-filter-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1.25rem;
+  box-shadow: var(--erp-shadow-sm);
 }
 
 .lm-filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 0.9rem;
   align-items: flex-end;
 }
 
-.lm-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.lm-input-compact {
+  padding: 0.45rem 0.65rem;
+  font-size: var(--erp-font-sm);
+  border-radius: var(--erp-radius-md);
 }
 
-.lm-filter-label {
-  font-size: 0.775rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.lm-filter-input,
-.lm-filter-select {
-  height: 38px;
-  padding: 0 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #1e293b;
-  background-color: #ffffff;
-  transition: border-color 0.15s ease;
-}
-
-.lm-filter-input:focus,
-.lm-filter-select:focus {
-  outline: none;
-  border-color: #0f172a;
-}
-
-/* ATAJOS RÁPIDOS DE FECHA */
 .lm-shortcuts-row {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f1f5f9;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--erp-border-row);
   flex-wrap: wrap;
 }
 
 .lm-shortcuts-label {
-  font-size: 0.75rem;
+  font-size: var(--erp-font-xs);
   font-weight: 600;
-  color: #64748b;
-  margin-right: 0.35rem;
+  color: var(--erp-text-muted);
+  margin-right: 0.25rem;
 }
 
 .lm-shortcut-btn {
-  padding: 0.25rem 0.65rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  background-color: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-md);
+  background-color: var(--erp-bg-hover);
+  color: var(--erp-text-secondary);
+  font-size: var(--erp-font-xs);
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--erp-transition-fast);
 }
 
 .lm-shortcut-btn:hover {
-  background-color: #0f172a;
+  background-color: var(--erp-primary);
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: var(--erp-primary);
 }
 
-/* TABLA DE REPORTES */
-.lm-table-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-}
-
+/* CABECERA INTERNA DE TABLA */
 .lm-table-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--erp-border-light);
   flex-wrap: wrap;
   gap: 1rem;
 }
 
 .lm-table-title {
-  font-size: 1rem;
+  font-size: var(--erp-font-md);
   font-weight: 700;
-  color: #0f172a;
+  color: var(--erp-text-main);
   margin: 0;
 }
 
 .lm-table-subtitle {
-  font-size: 0.775rem;
-  color: #64748b;
+  font-size: var(--erp-font-xs);
+  color: var(--erp-text-muted);
   margin: 0.15rem 0 0 0;
 }
 
@@ -332,303 +104,47 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.lm-table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.lm-data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  text-align: left;
-}
-
-.lm-data-table thead th {
-  background-color: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
-}
-
-.lm-data-table tbody td {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
-  vertical-align: middle;
-}
-
-.lm-data-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.lm-data-table tbody tr.row-selected {
-  background-color: #f0fdf4;
-}
-
-/* BOTONES SOBRIOS DEL ERP */
-.lm-btn-dark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0.95rem;
-  background-color: #0f172a;
-  color: #ffffff;
-  border: 1px solid #0f172a;
-  border-radius: 6px;
-  font-size: 0.825rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1.25;
-}
-
-.lm-btn-dark:hover:not(:disabled) {
-  background-color: #1e293b;
-  border-color: #1e293b;
-}
-
-.lm-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0.95rem;
-  background-color: #ffffff;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.825rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1.25;
-}
-
-.lm-btn-secondary:hover:not(:disabled) {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-}
-
-.lm-btn-icon-sm {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  border-radius: 4px;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.lm-btn-icon-sm:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-
-/* BADGES DE ESTADO */
-.lm-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  font-size: 0.725rem;
-  font-weight: 600;
-}
-
-.lm-badge-slate {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-.lm-badge-emerald {
-  background-color: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
-}
-
-.lm-badge-amber {
-  background-color: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
-}
-
-.lm-badge-red {
-  background-color: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-/* BANNER DE TURNO Y ARQUEO */
-.lm-shift-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
   flex-wrap: wrap;
 }
 
-.lm-shift-info {
+.row-selected {
+  background-color: var(--erp-success-bg) !important;
+}
+
+/* SUB-PESTAÑAS DENTRO DE MODAL DETALLE */
+.lm-subtabs-nav {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.lm-shift-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f172a;
-}
-
-/* FRENTE A FRENTE ARQUEO */
-.lm-frente-a-frente {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-@media (max-width: 900px) {
-  .lm-frente-a-frente {
-    grid-template-columns: 1fr;
-  }
-}
-
-.lm-col-panel {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.lm-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-}
-
-.lm-panel-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
   gap: 0.4rem;
-  margin: 0;
+  border-bottom: 1px solid var(--erp-border-light);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.lm-panel-total-badge {
-  font-size: 0.825rem;
-  font-weight: 700;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
+.lm-subtab-btn {
+  padding: 0.5rem 0.9rem;
+  border: none;
+  background: transparent;
+  font-size: var(--erp-font-sm);
+  font-weight: 600;
+  color: var(--erp-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: var(--erp-transition-fast);
 }
 
-.lm-panel-body {
-  padding: 1rem;
+.lm-subtab-btn:hover {
+  color: var(--erp-text-main);
 }
 
-.lm-add-row-form {
-  display: grid;
-  grid-template-columns: 110px 1fr 100px 36px;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  align-items: center;
+.lm-subtab-btn.active {
+  color: var(--erp-primary);
+  border-bottom-color: var(--erp-primary);
 }
 
-/* BANNER DE BALANCE FINAL ARQUEO */
-.lm-balance-summary-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.lm-balance-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  align-items: center;
-}
-
-/* MODALES */
-.lm-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 1rem;
-}
-
-.lm-modal-card {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 760px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.lm-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.lm-modal-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.lm-modal-body {
-  padding: 1.25rem;
-  overflow-y: auto;
-}
-
-.lm-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+.lm-callout-box {
+  background-color: var(--erp-bg-hover);
+  border: 1px solid var(--erp-border-light);
+  border-radius: var(--erp-radius-lg);
+  padding: 0.85rem 1rem;
 }
